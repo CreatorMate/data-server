@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "module": "esnext", // Allows top-level await
+    "target": "es2017", // Required for async/await
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "skipLibCheck": true
+  }
+}
