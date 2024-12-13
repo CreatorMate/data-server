@@ -4,7 +4,7 @@ import {PrismaClient} from "@prisma/client";
 export abstract class Endpoint {
     protected abstract readonly route: string;
     protected abstract readonly method: string;
-    protected abstract handle(context: Context);
+    protected abstract handle(context: Context): any;
     private supportedMethods = ['get', 'post', 'put', 'delete', 'patch', 'options'];
     protected prismaClient = new PrismaClient();
 
@@ -13,6 +13,7 @@ export abstract class Endpoint {
             throw new Error(`Unsupported HTTP method: ${this.method} in ${this.route}`);
         }
 
+        //@ts-ignore
         app[this.method](this.route, this.handle.bind(this));
     }
 

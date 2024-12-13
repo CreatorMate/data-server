@@ -1,4 +1,4 @@
-import {Hono} from "hono";
+import {Context, Hono, Next} from "hono";
 import {logger} from "hono/logger";
 
 import dotenv from 'dotenv';
@@ -8,6 +8,7 @@ dotenv.config();  // Load environment variables
 const API_KEY = process.env.API_KEY;
 
 export function useRedis() {
+    //@ts-ignore
     return new Redis({
         host: process.env.REDIS_HOST,
         port: process.env.REDIS_PORT,
@@ -22,7 +23,8 @@ const app = new Hono();
 
 app.use('*', logger());
 
-app.use('*', (ctx, next) => {
+//@ts-ignore
+app.use('*', (ctx: Context, next: Next) => {
     const apiKey = ctx.req.header('x-api-key');
     if (apiKey !== API_KEY) {
         return ctx.json({ error: 'Unauthorized' }, 401);

@@ -2,9 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import {Endpoint} from "../Endpoint";
 import {pathToFileURL} from "url";
+import {Hono} from "hono";
 
 class RouteLoader {
-    async isBaseController(filePath) {
+    async isBaseController(filePath: string) {
         try {
             // Use pathToFileURL to ensure the file path is properly formatted as a file URL
             const modulePath = pathToFileURL(filePath).href;
@@ -28,7 +29,7 @@ class RouteLoader {
     }
 
 // Function to search for files containing 'endpoint' in their name
-    async findAndRegisterEndpoints(dir, app) {
+    async findAndRegisterEndpoints(dir: string, app: Hono) {
          // Update with your directory path
         try {
             const entries = await fs.promises.readdir(dir, { withFileTypes: true });
