@@ -1,21 +1,26 @@
 import {Hono} from "hono";
-import {BaseController} from "./utils/BaseController";
 import {logger} from "hono/logger";
-import { env, getRuntimeKey } from 'hono/adapter'
-
-import fs from 'fs';
-import path from 'path';
-import { pathToFileURL } from 'url';
 
 import dotenv from 'dotenv';
 import {routeLoader} from "./utils/router/RouteLoader";
+import Redis from "ioredis";
 dotenv.config();  // Load environment variables
+const API_KEY = process.env.API_KEY;
+
+export function useRedis() {
+    return new Redis({
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT,
+        password: process.env.REDIS_PASSWORD,
+        tls: {},
+    });
+}
+
+const redis = useRedis();
 
 const app = new Hono();
 
 app.use('*', logger());
-
-console.log('test')
 
 app.use('*', (ctx, next) => {
     const apiKey = ctx.req.header('x-api-key');
@@ -25,9 +30,19 @@ app.use('*', (ctx, next) => {
     return next();
 });
 
-await routeLoader.findAndRegisterEndpoints('./modules', app);
+app.get('/redis/:key/:value', async (ctx) => {
+    const { key, value } = ctx.req.param();
+    await redis.set(key, value, 'EX', 86400);
+    return ctx.text(`Set key "${key}" with value "${value}"`);
+})
 
-const API_KEY = process.env.API_KEY;
+app.get('/redis/:key', async (ctx) => {
+    const { key } = ctx.req.param();
+    const value = await redis.get(key);
+    return ctx.text(`We found "${key}" with value "${value}"`);
+})
+
+await routeLoader.findAndRegisterEndpoints('./modules', app);
 
 
 

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import {BaseController} from "../BaseController";
+import {Endpoint} from "../Endpoint";
 import {pathToFileURL} from "url";
 
 class RouteLoader {
@@ -15,7 +15,7 @@ class RouteLoader {
                 const exported = module[exportedName];
                 if (
                     typeof exported === 'function' && // Ensure it's a class or constructor
-                    Object.getPrototypeOf(exported)?.name === 'BaseController'
+                    Object.getPrototypeOf(exported)?.name === 'Endpoint'
                 ) {
                     return exported; // Return the class if it matches
                 }

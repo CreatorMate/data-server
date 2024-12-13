@@ -15,8 +15,12 @@
   "license": "ISC",
   "dependencies": {
     "@hono/node-server": "^1.13.7",
+    "@prisma/client": "^6.0.1",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "hono": "^4.6.13",
+    "ioredis": "^5.4.1",
+    "prisma": "^6.0.1",
     "tsx": "^4.19.2"
   },
   "devDependencies": {

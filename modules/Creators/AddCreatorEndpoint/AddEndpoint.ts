@@ -1,7 +1,7 @@
-import {BaseController} from "../../../utils/BaseController";
+import {Endpoint} from "../../../utils/Endpoint";
 import {Context} from "hono";
 
-export class AddEndpoint extends BaseController{
+export class AddEndpoint extends Endpoint{
     protected readonly method: string = 'post'
     protected readonly route: string = '/creators/add'
 
