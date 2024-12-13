@@ -15,6 +15,8 @@ const app = new Hono();
 
 app.use('*', logger());
 
+console.log('test')
+
 app.use('*', (ctx, next) => {
     const apiKey = ctx.req.header('x-api-key');
     if (apiKey !== API_KEY) {
