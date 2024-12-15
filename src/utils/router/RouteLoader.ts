@@ -3,6 +3,7 @@ import path from 'path';
 import {Endpoint} from "../Endpoint";
 import {pathToFileURL} from "url";
 import {Hono} from "hono";
+import {OpenAPIHono} from "@hono/zod-openapi";
 
 class RouteLoader {
     async isBaseController(filePath: string) {
@@ -29,7 +30,7 @@ class RouteLoader {
     }
 
 // Function to search for files containing 'endpoint' in their name
-    async findAndRegisterEndpoints(dir: string, app: Hono) {
+    async findAndRegisterEndpoints(dir: string, app: OpenAPIHono) {
          // Update with your directory path
         try {
             const entries = await fs.promises.readdir(dir, { withFileTypes: true });
