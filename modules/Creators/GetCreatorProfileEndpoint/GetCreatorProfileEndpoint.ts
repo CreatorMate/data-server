@@ -5,7 +5,6 @@ import {errorResponse, successResponse} from "../../../src/utils/APIResponse/Htt
 import {Groups} from "../../../src/lib/enums";
 import {z, ZodObject} from "zod";
 import env from "../../../src/env";
-import {cache} from "hono/dist/types/middleware/cache";
 
 type CreatorProfile = {
     "username": string,
@@ -41,24 +40,28 @@ export class GetCreatorProfileEndpoint extends Endpoint {
             return successResponse(context, cachedProfile);
         }
 
-        // const result = await this.prismaClient.creators.findFirst({
-        //     //@ts-ignore
-        //     where: {id: id}
-        // });
-        //
-        // const result2 = await this.prismaClient.phyllo_connections.findFirst({
-        //     //@ts-ignore
-        //     where: {id: 'CREATOR'+result.id}
-        // });
+        const result = await this.getPrisma().creators.findFirst({
+            //@ts-ignore
+            where: {id: id}
+        });
 
-        // //@ts-ignore
-        // const result3 = await this.prismaClient.connected_accounts.findFirst({
-        //     //@ts-ignore
-        //     where: {user_id: result2.user_id}
-        // });
+        if(!result) return errorResponse(context, 'no creator with this id', 404);
+
+        const result2 = await this.getPrisma().phyllo_connections.findFirst({
+            //@ts-ignore
+            where: {id: 'CREATOR'+result.id}
+        });
+
+        if(!result) return errorResponse(context, 'this creator has not coupled an instagram account', 404);
 
         //@ts-ignore
-        const response = await fetch(`https://api.staging.getphyllo.com/v1/accounts/${id}`, {
+        const result3 = await this.getPrisma().connected_accounts.findFirst({
+            //@ts-ignore
+            where: {user_id: result2.user_id}
+        });
+
+        //@ts-ignore
+        const response = await fetch(`https://api.staging.getphyllo.com/v1/accounts/${result3.account_id}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -68,18 +71,10 @@ export class GetCreatorProfileEndpoint extends Endpoint {
         });
 
         //@ts-ignore
-        if (!response.ok) return errorResponse(context, id);
+        if (!response.ok) return errorResponse(context, id as string);
         let profile = await response.json();
 
-        let creatorProfile: CreatorProfile = {
-            "username": profile.username,
-            "platform_username": profile.platform_username,
-            "profile_pic_url": profile.profile_pic_url,
-            "platform_profile_name": profile.platform_profile_name,
-            "platform_profile_id": profile.platform_profile_id,
-        }
-
-        await redis.set(key, JSON.stringify(creatorProfile), 'EX', 172800);
+        await redis.set(key, JSON.stringify(profile), 'EX', 1);
 
         return successResponse(context, profile);
     }

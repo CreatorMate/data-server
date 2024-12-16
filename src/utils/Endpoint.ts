@@ -14,7 +14,10 @@ export abstract class Endpoint {
     protected abstract handle(context: Context): any;
 
     private supportedMethods = ['get', 'post', 'put', 'delete', 'patch', 'options'];
-    protected prismaClient = new PrismaClient();
+
+    public getPrisma(): PrismaClient {
+        return new PrismaClient();
+    }
 
     public register(app: OpenAPIHono): void {
         if (!this.supportedMethods.includes(this.method.toLowerCase())) {
@@ -33,11 +36,8 @@ export abstract class Endpoint {
                     }
                 },
             ),
-            this.handle
+            (context) => this.handle(context)
         );
-
-        //@ts-ignore
-        app[this.method](this.route, this.handle.bind(this));
     }
 
 

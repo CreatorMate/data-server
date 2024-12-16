@@ -10,12 +10,6 @@
     "outDir": "./dist",
     "rootDir": "./",
     "skipLibCheck": true,
-    "paths": {
-      "*": [
-        "./*"
-      ]
-      // Ensure proper resolution of local modules
-    }
   },
   "ts-node": {
     "esm": true,
