@@ -1,19 +1,20 @@
 import env from "../../env";
 import {REQUEST_TOO_LONG, TOO_MANY_REQUESTS} from "../../http-status-codes";
+import {APIResponse} from "../APIResponse/HttpResponse";
 
 type methods =  'GET' | 'POST' | 'PUT' | 'DELETE' | 'OPTIONS' | 'PATCH';
 export abstract class PhylloEndpoint {
     protected baseUrl: string = 'https://api.staging.getphyllo.com/v1'
-
-
-    protected async fetch(method: methods, endpoint: string) {
-        while (true) {
+    protected async fetch(method: methods, endpoint: string): Promise<APIResponse> {
+        let retryCount = 0;
+        const maxRetries = 10;
+        while (retryCount < maxRetries) {
             const request = await fetch(this.baseUrl+endpoint, {
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'Authorization': 'Bearer ' + env?.API_KEY,
+                    'Authorization': 'Basic ' + env?.PHYLLO_KEY,
                 }
             });
 
@@ -23,6 +24,7 @@ export abstract class PhylloEndpoint {
                     const waitTime = parseInt(retryAfter, 10) * 1000;
                     console.warn(`Rate limited. Retrying ${retryAfter} seconds...`);
                     await this.wait(waitTime);
+                    retryCount++;
                     continue;
                 }
             }
@@ -38,6 +40,7 @@ export abstract class PhylloEndpoint {
             return {
                 success: true,
                 data: result,
+                meta: null
             }
         }
     }

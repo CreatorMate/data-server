@@ -4,19 +4,53 @@ import {z, ZodObject} from "zod";
 import jsonContent from "./OpenAPI/JsonContent";
 import {Groups} from "../lib/enums";
 import {PrismaClient} from "@prisma/client"
+import {PhylloClient} from "./Phyllo/PhylloClient";
+import Redis from "ioredis";
+import env from "../env";
+
 export abstract class Endpoint {
     protected abstract readonly group: Groups;
     protected abstract readonly description: string;
     protected abstract readonly route: string;
     protected abstract readonly method: string;
-    protected abstract schema: ZodObject<any>
+    protected abstract schema: ZodObject<any>;
 
-    protected abstract handle(context: Context): any;
+    protected abstract handle(context: Context): any
+
+    protected async getFromCache(key: string) {
+        const redis = this.getRedis();
+        let cachedItem = JSON.parse(await redis.get(key));
+        if (cachedItem && Object.keys(cachedItem).length > 0) {
+            return cachedItem;
+        }
+        return null;
+    }
+
+    protected async storeInCache(key: string, data: object) {
+        const redis = this.getRedis();
+        await redis.set(key, JSON.stringify(data), 'EX', 172800);
+    }
+
+    protected getRedis(): Redis {
+        return new Redis({
+            host: env?.REDIS_HOST,
+            //@ts-ignore
+            port: env?.REDIS_PORT,
+            //@ts-ignore
+            password: env?.REDIS_PASSWORD,
+            //@ts-ignore
+            tls: {},
+        });
+    }
 
     private supportedMethods = ['get', 'post', 'put', 'delete', 'patch', 'options'];
 
     public getPrisma(): PrismaClient {
         return new PrismaClient();
+    }
+
+    public getPhyllo(): PhylloClient {
+        return new PhylloClient()
     }
 
     public register(app: OpenAPIHono): void {
@@ -31,7 +65,10 @@ export abstract class Endpoint {
                     responses: {
                         OK: jsonContent(this.schema, this.description),
                         ...((this.method === 'post' || this.method === 'put') && {
-                            UNPROCESSABLE_ENTITY: jsonContent(z.object({success: z.boolean(), message: z.string()}), "The validation error(s)"),
+                            UNPROCESSABLE_ENTITY: jsonContent(z.object({
+                                success: z.boolean(),
+                                message: z.string()
+                            }), "The validation error(s)"),
                         }),
                     }
                 },

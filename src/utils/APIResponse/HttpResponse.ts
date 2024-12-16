@@ -19,7 +19,7 @@ export function successResponse<T>(context: Context, data: any, meta: any = null
 }
 
 export function errorResponse(context: Context, error: string, code = 500) {
-    context.status(500);
+    context.status(code);
     return context.json({
         success: false,
         error: error

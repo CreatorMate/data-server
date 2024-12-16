@@ -3,26 +3,36 @@ import Redis from "ioredis";
 import {Endpoint} from "../../../src/utils/Endpoint";
 import {errorResponse, successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 import {Groups} from "../../../src/lib/enums";
-import {z, ZodObject} from "zod";
+import {undefined, z, ZodObject} from "zod";
 import env from "../../../src/env";
-
-type CreatorProfile = {
-    "username": string,
-    "platform_username": string,
-    "profile_pic_url": string,
-    "platform_profile_name": string,
-    "platform_profile_id": string,
-}
+import {CreatorProfile} from "../../../src/lib/types";
 
 export class GetCreatorProfileEndpoint extends Endpoint {
     protected readonly method: string = 'get'
     protected readonly route: string = '/creators/profile/:id'
     protected readonly description: string = 'fetch an instagram profile'
     protected readonly group: Groups = Groups.CREATORS;
-    protected schema: ZodObject<any> = z.object({})
+    protected schema: ZodObject<any> = z.object({
+        username: z.string(),
+        platform_username: z.string(),
+        full_name: z.string(),
+        profile_url: z.string(),
+        description: z.string(),
+        picture: z.string(),
+        date_of_birth: z.string().nullable(),
+        platform_account_type: z.string().nullable(),
+        category: z.string(),
+        followers: z.number(),
+        following: z.number(),
+        posts: z.string(),
+        gender: z.string().nullable(),
+        country: z.string().nullable(),
+        is_verified: z.boolean(),
+        website: z.string()
+    })
 
     protected async handle(context: Context) {
-        const id = context.req.param('id');
+        const id = context.req.param('id') as string;
         const key = `${id}.profile`;
         //@ts-ignore
         const redis = new Redis({
@@ -35,47 +45,47 @@ export class GetCreatorProfileEndpoint extends Endpoint {
             tls: {},
         });
         //@ts-ignore
-        let cachedProfile = JSON.parse(await redis.get(key));
-        if (cachedProfile && Object.keys(cachedProfile).length > 0) {
-            return successResponse(context, cachedProfile);
+        const cache = await this.getFromCache(key);
+        if (cache) {
+            return successResponse(context, cache);
         }
 
-        const result = await this.getPrisma().creators.findFirst({
-            //@ts-ignore
-            where: {id: id}
-        });
+        const getConnectedAccount = await this.getPhyllo().accounts().getAccountById(id);
 
-        if(!result) return errorResponse(context, 'no creator with this id', 404);
+        if(!getConnectedAccount.success) {
+            return errorResponse(context, getConnectedAccount.error, 404);
+        }
 
-        const result2 = await this.getPrisma().phyllo_connections.findFirst({
-            //@ts-ignore
-            where: {id: 'CREATOR'+result.id}
-        });
-
-        if(!result) return errorResponse(context, 'this creator has not coupled an instagram account', 404);
+        const response = await this.getPhyllo().profiles().getByAccountId(getConnectedAccount.data.account_id);
 
         //@ts-ignore
-        const result3 = await this.getPrisma().connected_accounts.findFirst({
-            //@ts-ignore
-            where: {user_id: result2.user_id}
-        });
+        if (!response.success) return errorResponse(context, id as string);
 
-        //@ts-ignore
-        const response = await fetch(`https://api.staging.getphyllo.com/v1/accounts/${result3.account_id}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': `Basic ${env?.PHYLLO_KEY}`
-            }
-        });
+        const profile = this.toCreatorProfile(response.data.data[0]);
 
-        //@ts-ignore
-        if (!response.ok) return errorResponse(context, id as string);
-        let profile = await response.json();
-
-        await redis.set(key, JSON.stringify(profile), 'EX', 1);
+        await this.storeInCache(key, profile);
 
         return successResponse(context, profile);
+    }
+
+    private toCreatorProfile(data: any): CreatorProfile {
+        return {
+            username: data.username,
+            platform_username: data.platform_username,
+            full_name: data.full_name,
+            description: data.introduction,
+            picture: data.image_url,
+            followers: data.reputation.follower_count,
+            following: data.reputation.following_count,
+            website: data.websitem,
+            category: data.category,
+            country: data.country,
+            date_of_birth: data.date_of_birth,
+            gender: data.gender,
+            is_verified: data.is_verified,
+            platform_account_type: data.platform_account_type,
+            posts: data.reputation.content_count,
+            profile_url: data.url,
+        }
     }
 }

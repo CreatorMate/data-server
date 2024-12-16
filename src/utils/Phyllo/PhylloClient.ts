@@ -1,10 +1,11 @@
 import {Identity} from "./Endpoints/Identity";
 import {Engagement} from "./Endpoints/Engagement";
 import {Content} from "./Endpoints/Content";
+import {Accounts} from "./Endpoints/Accounts";
 
 export class PhylloClient {
 
-    public identity() {
+    public profiles() {
         return new Identity();
     }
 
@@ -14,5 +15,9 @@ export class PhylloClient {
 
     public content() {
         return new Content();
+    }
+
+    public accounts() {
+        return new Accounts();
     }
 }

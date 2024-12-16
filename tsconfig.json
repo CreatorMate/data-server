@@ -10,6 +10,13 @@
     "outDir": "./dist",
     "rootDir": "./",
     "skipLibCheck": true,
+    "include": [
+      "src/**/*" // Ensure this path includes the file with your code
+    ],
+    "exclude": [
+      "node_modules",
+      "dist"
+    ]
   },
   "ts-node": {
     "esm": true,
