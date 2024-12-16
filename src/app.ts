@@ -1,16 +1,16 @@
-import {Context, Hono, Next} from "hono";
-import {logger} from "hono/logger";
-
 import {routeLoader} from "./utils/router/RouteLoader";
-import Redis from "ioredis";
 import {OpenAPIHono} from "@hono/zod-openapi";
 import createApp from "./lib/createApp";
 import configureOpenAPI from "./lib/configureOpenAPI";
+import {PhylloClient} from "./utils/Phyllo/PhylloClient";
 
 const app: OpenAPIHono = createApp();
 
 configureOpenAPI(app);
 
-await routeLoader.findAndRegisterEndpoints('./src/modules', app);
+const client = new PhylloClient();
+
+
+await routeLoader.findAndRegisterEndpoints('./modules', app);
 
 export default app;

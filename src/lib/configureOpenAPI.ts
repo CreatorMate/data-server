@@ -14,7 +14,7 @@ export default function configureOpenAPI(app: OpenAPIHono) {
     app.get("/reference", apiReference({
         defaultHttpClient: {
           targetKey: 'node',
-          clientKey: 'undici'
+          clientKey: 'fetch'
         },
         theme: "kepler",
         spec: {

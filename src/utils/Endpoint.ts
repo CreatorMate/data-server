@@ -1,11 +1,9 @@
 import {Context, Hono} from "hono";
-import {PrismaClient} from "@prisma/client";
 import {createRoute, OpenAPIHono} from "@hono/zod-openapi";
 import {z, ZodObject} from "zod";
 import jsonContent from "./OpenAPI/JsonContent";
-import {OK, UNPROCESSABLE_ENTITY} from "../http-status-codes";
 import {Groups} from "../lib/enums";
-
+import {PrismaClient} from "@prisma/client"
 export abstract class Endpoint {
     protected abstract readonly group: Groups;
     protected abstract readonly description: string;

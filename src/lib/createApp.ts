@@ -5,6 +5,7 @@ import onError from "../middlewares/OnError";
 import env from "../env";
 import {logger} from "hono/logger";
 import defaultHook from "../utils/OpenAPI/defaultHook";
+import {authenticationMiddleware} from "../middlewares/Authentication";
 
 export function createRouter() {
     return new OpenAPIHono({
@@ -17,13 +18,7 @@ export default function createApp() {
 
     app.use('*', logger());
 
-    // app.use('*', (ctx: Context, next: Next): any => {
-        // const apiKey = ctx.req.header('x-api-key');
-        // if (apiKey !== env?.API_KEY) {
-        //     return ctx.json({ error: 'Unauthorized' }, 401);
-        // }
-        // return next();
-    // });
+    app.use(authenticationMiddleware);
 
     app.notFound(notFound)
     app.onError(onError);

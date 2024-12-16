@@ -1,7 +1,7 @@
-import {Endpoint} from "../../../utils/Endpoint";
+import {Endpoint} from "../../../src/utils/Endpoint";
 import {Context} from "hono";
 import {z} from "zod";
-import {Groups} from "../../../lib/enums";
+import {Groups} from "../../../src/lib/enums";
 
 export class AddEndpoint extends Endpoint{
     protected readonly group: Groups = Groups.CREATORS;
@@ -13,7 +13,7 @@ export class AddEndpoint extends Endpoint{
     });
 
     protected handle(ctx: Context) {
-        return ctx.json({'added': true})
+        return ctx.json({'added': true});
     }
 
 
