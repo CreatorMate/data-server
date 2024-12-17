@@ -5,18 +5,23 @@ import {APIResponse} from "../APIResponse/HttpResponse";
 type methods =  'GET' | 'POST' | 'PUT' | 'DELETE' | 'OPTIONS' | 'PATCH';
 export abstract class PhylloEndpoint {
     protected baseUrl: string = 'https://api.staging.getphyllo.com/v1'
-    protected async fetch(method: methods, endpoint: string): Promise<APIResponse> {
+    protected async fetch(method: methods, endpoint: string, body = {}): Promise<APIResponse> {
         let retryCount = 0;
         const maxRetries = 10;
         while (retryCount < maxRetries) {
-            const request = await fetch(this.baseUrl+endpoint, {
+            const requestOptions: RequestInit = {
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'Authorization': 'Basic ' + env?.PHYLLO_KEY,
-                }
-            });
+                },
+            }
+
+            if(method == 'POST') {
+                requestOptions.body = JSON.stringify(body)
+            }
+            const request = await fetch(this.baseUrl+endpoint, requestOptions);
 
             if(request.status === TOO_MANY_REQUESTS) {
                 const retryAfter = request.headers.get("Retry-After");

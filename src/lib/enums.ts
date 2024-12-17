@@ -1,3 +1,6 @@
 export enum Groups {
-    CREATORS = "Creators"
+    Profiles = "Profiles",
+    Content = "Content",
+    Refresh = "Refresh",
+    Engagement = "Engagement"
 }
