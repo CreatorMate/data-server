@@ -48,6 +48,11 @@ export abstract class PhylloEndpoint {
                 meta: null
             }
         }
+
+        return {
+            success: false,
+            error: 'something went wrong',
+        }
     }
 
     private wait(seconds: number): Promise<void> {

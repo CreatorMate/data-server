@@ -11,6 +11,5 @@ export class GetCreatorsContentItemsEndpoint extends Endpoint {
     protected schema: ZodObject<any> = z.object({});
 
     protected async handle(context: Context) {
-        const hoi = hoi;
     }
 }

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "module": "es2022",
     // Allows top-level await
     "target": "es2022",
@@ -9,17 +10,13 @@
     "esModuleInterop": true,
     "outDir": "./dist",
     "rootDir": "./",
-    "skipLibCheck": true,
-    "include": [
-      "src/**/*" // Ensure this path includes the file with your code
-    ],
-    "exclude": [
-      "node_modules",
-      "dist"
-    ]
+    "skipLibCheck": true
   },
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"
-  }
+  },
+  "exclude": [
+    "node_modules",
+  ]
 }

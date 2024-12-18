@@ -6,7 +6,7 @@ expand(config());
 
 const EnvSchema = z.object({
     NODE_ENV: z.string().default("development"),
-    PORT: z.coerce.number().default(5000),
+    PORT: z.coerce.number().default(3000),
     API_KEY: z.string(),
     DATABASE_URL: z.string(),
     ENCRYPTION_KEY: z.string(),

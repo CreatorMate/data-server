@@ -1,6 +1,5 @@
 import {OpenAPIHono} from "@hono/zod-openapi";
 import {apiReference} from "@scalar/hono-api-reference";
-import {any} from "zod";
 
 export default function configureOpenAPI(app: OpenAPIHono) {
     app.doc("/doc", {

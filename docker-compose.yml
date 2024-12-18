@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  hono-api:
+    build: .
+    environment:
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      API_KEY: ${API_KEY}
+
+      MAILER_DRIVER: ${MAILER_DRIVER}
+      MAILER_HOST: ${MAILER_HOST}
+      MAILER_PORT: ${MAILER_PORT}
+      MAILER_USER: ${MAILER_USER}
+      MAILER_PASS: ${MAILER_PASS}
+
+      PHYLLO_KEY: ${PHYLLO_KEY}
+      DATABASE_URL: ${DATABASE_URL}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

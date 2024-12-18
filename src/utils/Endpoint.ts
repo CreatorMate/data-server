@@ -19,7 +19,9 @@ export abstract class Endpoint {
 
     protected async getFromCache(key: string) {
         const redis = this.getRedis();
-        let cachedItem = JSON.parse(await redis.get(key));
+        const redisItem = await redis.get(key);
+        if(!redisItem) return null;
+        let cachedItem = JSON.parse(redisItem);
         if (cachedItem && Object.keys(cachedItem).length > 0) {
             return cachedItem;
         }
@@ -60,6 +62,7 @@ export abstract class Endpoint {
 
         app.openapi(createRoute({
                     tags: [this.group],
+            //@ts-ignore
                     method: this.method,
                     path: this.route,
                     responses: {
