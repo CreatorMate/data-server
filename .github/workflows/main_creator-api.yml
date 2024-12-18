@@ -22,15 +22,15 @@ jobs:
     - name: Log in to registry
       uses: docker/login-action@v2
       with:
-        registry: https://creatorapi.azurecr.io/
-        username: ${{ secrets.AzureAppService_ContainerUsername_3f3f4ceeb6c1414096426a28c5b2d9d7 }}
-        password: ${{ secrets.AzureAppService_ContainerPassword_ea8845b7bcba4fa59aa9b3f074c9f82a }}
+        registry: https://creatormate.azurecr.io/
+        username: ${{ secrets.AzureAppService_ContainerUsername_7b1e782c2d3b424e8c7fc01a1311bc00 }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_ee35493f64db45e4a50c35e43a4664c4 }}
 
     - name: Build and push container image to registry
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: creatorapi.azurecr.io/creator-api:${{ github.sha }}
+        tags: creatormate.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_7b1e782c2d3b424e8c7fc01a1311bc00 }}/creator-api:${{ github.sha }}
         file: ./Dockerfile
 
   deploy:
@@ -47,5 +47,5 @@ jobs:
       with:
         app-name: 'creator-api'
         slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_24b05f9c7bad4ee38a02d1b56af0b062 }}
-        images: 'creatorapi.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_3f3f4ceeb6c1414096426a28c5b2d9d7 }}/creator-api:${{ github.sha }}'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_c52676d9c2074892a0c958f0af46aa87 }}
+        images: 'creatormate.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_7b1e782c2d3b424e8c7fc01a1311bc00 }}/creator-api:${{ github.sha }}'
