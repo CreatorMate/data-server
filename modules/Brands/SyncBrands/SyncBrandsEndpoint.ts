@@ -5,7 +5,7 @@ import {Context} from "hono";
 import {successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 
 export class SyncBrandsEndpoint extends Endpoint {
-    protected readonly description: 'Sync the data for all the brands.';
+    protected readonly description: string = "Sync the data for all the brands.";
     protected readonly group: Groups = Groups.Brands
     protected readonly method: string = 'get'
     protected readonly route: string = '/brands/sync'
