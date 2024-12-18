@@ -30,7 +30,7 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: creatorapi.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_3f3f4ceeb6c1414096426a28c5b2d9d7 }}/creator-api:${{ github.sha }}
+        tags: creatorapi.azurecr.io/creator-api:${{ github.sha }}
         file: ./Dockerfile
 
   deploy:
