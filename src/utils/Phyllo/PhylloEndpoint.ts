@@ -27,7 +27,6 @@ export abstract class PhylloEndpoint {
                 const retryAfter = request.headers.get("Retry-After");
                 if(retryAfter) {
                     const waitTime = parseInt(retryAfter, 10) * 1000;
-                    console.warn(`Rate limited. Retrying ${retryAfter} seconds...`);
                     await this.wait(waitTime);
                     retryCount++;
                     continue;
