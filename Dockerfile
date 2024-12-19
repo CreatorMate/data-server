@@ -1,4 +1,7 @@
-FROM node:20-alpine AS base
+FROM node:20-bullseye-slim AS base
+
+# Install OpenSSL 1.1
+RUN apt-get update && apt-get install -y openssl=1.1.1* && rm -rf /var/lib/apt/lists/*
 
 COPY package.json ./
 COPY package-lock.json ./
