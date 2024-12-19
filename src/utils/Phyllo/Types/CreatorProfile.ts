@@ -18,7 +18,6 @@ export type CreatorProfile = {
 }
 
 export function toCreatorProfile(data: any): CreatorProfile {
-    console.log(data);
     return {
         username: data.username,
         platform_username: data.platform_username,
