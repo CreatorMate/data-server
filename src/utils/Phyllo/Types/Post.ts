@@ -8,18 +8,16 @@ export type Post = {
     media_url: string,
     description: string,
     visibility: string,
-    thumbnail: string|null,
+    thumbnail: string | null,
     published_at: string,
-    mentions: string[]|null
-    engagement: {
-        likes: number,
-        comments: number,
-        reach_organic_count: number,
-        saves: number,
-        views: number|null,
-        replays: number|null,
-        shares: number
-    }
+    mentions: string[] | null
+    likes: number,
+    comments: number,
+    reach_organic_count: number,
+    saves: number,
+    views: number | null,
+    replays: number | null,
+    shares: number
 }
 
 export function toPost(data: any): Post {
@@ -36,14 +34,12 @@ export function toPost(data: any): Post {
         thumbnail: data.thumbnail_url ?? null,
         published_at: data.published_at,
         mentions: data.mentions ?? null,
-        engagement: {
-            likes: data.engagement.like_count,
-            comments: data.engagement.comment_count,
-            reach_organic_count: data.reach_organic_count,
-            saves: data.engagement.save_count,
-            views: data.engagement.view_count ?? null,
-            replays: data.engagement.replay_count ?? null,
-            shares: data.engagement.share_count
-        }
+        likes: data.engagement.like_count,
+        comments: data.engagement.comment_count,
+        reach_organic_count: data.reach_organic_count,
+        saves: data.engagement.save_count,
+        views: data.engagement.view_count ?? null,
+        replays: data.engagement.replay_count ?? null,
+        shares: data.engagement.share_count
     }
 }
