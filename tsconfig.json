@@ -2,15 +2,13 @@
   "compilerOptions": {
     "baseUrl": ".",
     "module": "es2022",
-    // Allows top-level await
     "target": "es2022",
-    // Required for async/await
     "moduleResolution": "node",
     "strict": true,
     "esModuleInterop": true,
     "outDir": "./dist",
     "rootDir": "./",
-    "skipLibCheck": true
+    "skipLibCheck": true,
   },
   "ts-node": {
     "esm": true,

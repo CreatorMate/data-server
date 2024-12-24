@@ -4,6 +4,7 @@ import {z, ZodObject} from "zod";
 import {Context} from "hono";
 import {APIResponse, errorResponse, successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 import {ConnectedAccount, Creator} from "../../../src/lib/supabase-types";
+import {Post} from "../../../src/utils/Phyllo/Types/Post";
 
 export class SyncBrandsEndpoint extends Endpoint {
     protected readonly description: string = "Sync the data for all the brands.";
@@ -13,6 +14,8 @@ export class SyncBrandsEndpoint extends Endpoint {
     protected schema: ZodObject<any> = z.object({
         started: z.boolean()
     });
+
+    private brandContentMap = new Map<string, Post[]>();
 
     protected async handle(context: Context) {
         this.sync().catch(err => console.error('Background task error:', err));
@@ -26,6 +29,7 @@ export class SyncBrandsEndpoint extends Endpoint {
         const brands = await this.getPrisma().brands.findMany();
         const syncedCreators = new Map<string, boolean>();
         for (const brand of brands) {
+            this.brandContentMap = new Map<string, Post[]>();
             const creators = await this.getPrisma().creators.findMany({
                 where: {
                     brand_id: brand.id,
@@ -44,6 +48,8 @@ export class SyncBrandsEndpoint extends Endpoint {
                     syncedCreators.set(creator.id, false)
                 }
             }
+
+            await this.storeInCache(`brands.${brand.id}.content`, this.brandContentMap);
         }
 
         console.log('we are done syncing');
@@ -59,11 +65,12 @@ export class SyncBrandsEndpoint extends Endpoint {
         const refreshContentRequest = await this.getPhyllo().content().refreshContentFor(account_id);
 
         const profileRequest = await this.getPhyllo().profiles().getByAccountId(account_id);
-        const contentRequest = await this.getPhyllo().content().getContentList(account_id);
+        const contentRequest: APIResponse<Post[]> = await this.getPhyllo().content().getContentList(account_id);
         const demographicsRequest = await this.getPhyllo().profiles().getDemographicsByAccountId(account_id);
 
         if (contentRequest.success) {
             await this.storeInCache(`${creator.id}.content`, contentRequest.data);
+            this.brandContentMap.set(creator.id, contentRequest.data);
         }
         if (profileRequest.success) {
             await this.storeInCache(`${creator.id}.profile`, profileRequest.data);
