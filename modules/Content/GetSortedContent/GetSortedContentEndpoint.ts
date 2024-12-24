@@ -14,9 +14,7 @@ export class GetSortedContentEndpoint extends Endpoint {
 
     protected async handle(context: Context): Promise<any> {
         const brand_id = context.req.param('id') as string;
-        const {key, order, ids} = context.req.query();
-
-        const creatorIds = ids.split(',');
+        let {key, order, ids, page, limit} = context.req.query();
 
         if(!brand_id) return errorResponse(context, 'provide a valid key');
 
@@ -24,23 +22,37 @@ export class GetSortedContentEndpoint extends Endpoint {
             return errorResponse(context, 'order must be either asc or desc')
         }
 
+        const sortedPosts = await this.getSortedContent(brand_id, ids, key, order);
+
+        const amount = limit ? Number(limit) : 10;
+        const currentPage = page ? Number(page) : 1;
+
+        const startAt = (currentPage - 1) * amount;
+
+        const posts = sortedPosts.slice(startAt, startAt+amount);
+        return successResponse(context, posts);
+    }
+
+    private async getSortedContent(brand_id: string, ids: string, key: string, order: string): Promise<Post[]> {
         let creatorContent: Map<string, Post[]> = await this.getFromCache(`brands.${brand_id}.content`);
         if(!creatorContent) {
-            //@todo switch this to a map not a list.
             creatorContent = await this.getCreatorContentFromCashe(Number(brand_id));
         }
 
-        const posts: Post[] = this.getPostsFromMap(creatorContent, creatorIds);
+        const posts: Post[] = this.getPostsFromMap(creatorContent, ids);
 
-        const sorted = this.sortPosts<Post>(posts, key as keyof Post, order as  "asc" | "desc");
-
-        return successResponse(context, sorted);
+        return this.sortPosts<Post>(posts, key as keyof Post, order as  "asc" | "desc");
     }
 
-    private getPostsFromMap(creatorContent: Map<string, Post[]>, ids: string[]): Post[] {
+    private getPostsFromMap(creatorContent: Map<string, Post[]>, ids: string): Post[] {
         const contentList: Post[] = [];
+        let creatorIds = [];
+        if(ids) {
+            creatorIds = ids.split(',');
+        }
         for (const [id, posts] of creatorContent.entries()) {
-            if(ids.length !== 0 && !ids.includes(id)) continue;
+            console.log(id);
+            if(creatorIds.length !== 0 && !creatorIds.includes(id)) continue;
             contentList.push(...posts);
         }
 

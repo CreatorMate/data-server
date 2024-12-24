@@ -37,7 +37,7 @@ export abstract class PhylloEndpoint {
             if(!request.ok) {
                 return {
                     success: false,
-                    error: result.message,
+                    error: result.error.message,
                 }
             }
 

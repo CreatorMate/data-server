@@ -65,7 +65,7 @@ export class SyncBrandsEndpoint extends Endpoint {
         const refreshContentRequest = await this.getPhyllo().content().refreshContentFor(account_id);
 
         const profileRequest = await this.getPhyllo().profiles().getByAccountId(account_id);
-        const contentRequest: APIResponse<Post[]> = await this.getPhyllo().content().getContentList(account_id);
+        const contentRequest: APIResponse<Post[]> = await this.getPhyllo().content().getContentList(account_id, 60);
         const demographicsRequest = await this.getPhyllo().profiles().getDemographicsByAccountId(account_id);
 
         if (contentRequest.success) {
