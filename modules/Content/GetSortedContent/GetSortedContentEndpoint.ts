@@ -34,7 +34,8 @@ export class GetSortedContentEndpoint extends Endpoint {
     }
 
     private async getSortedContent(brand_id: string, ids: string, key: string, order: string): Promise<Post[]> {
-        let creatorContent: Map<string, Post[]> = await this.getFromCache(`brands.${brand_id}.content`);
+        const brandPosts: Record<string, Post[]> = await this.getFromCache(`brands.${brand_id}.content`);
+        let creatorContent: Map<string, Post[]> = new Map(Object.entries(brandPosts));
         if(!creatorContent) {
             creatorContent = await this.getCreatorContentFromCashe(Number(brand_id));
         }
@@ -46,7 +47,7 @@ export class GetSortedContentEndpoint extends Endpoint {
 
     private getPostsFromMap(creatorContent: Map<string, Post[]>, ids: string): Post[] {
         const contentList: Post[] = [];
-        let creatorIds = [];
+        let creatorIds: string[] = [];
         if(ids) {
             creatorIds = ids.split(',');
         }

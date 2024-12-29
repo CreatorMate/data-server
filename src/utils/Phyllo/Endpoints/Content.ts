@@ -6,12 +6,12 @@ import {formatDate} from "../../../lib/utils";
 export class Content extends PhylloEndpoint {
     public async getContentList(account_id: string, days = 30): Promise<APIResponse> {
         const currentDate = new Date();
-        const pastDate = new Date();
+        let pastDate = new Date(currentDate);
 
         pastDate.setDate(currentDate.getDate() - days);
 
         const contentRequest: APIResponse<any> = await this.fetch('GET', `/social/contents?account_id=${account_id}&to_date=${formatDate(currentDate)}&from_date=${formatDate(pastDate)}&limit=100`);
-        console.log(contentRequest)
+
         if(!contentRequest.success) return contentRequest;
 
         const posts: Post[] = [];

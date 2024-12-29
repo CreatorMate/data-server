@@ -54,6 +54,4 @@ export class GetCreatorProfileEndpoint extends Endpoint {
 
         return successResponse(context, response.data);
     }
-
-
 }

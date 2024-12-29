@@ -15,6 +15,7 @@ export type CreatorProfile = {
     country: string|null,
     is_verified: boolean,
     website: string
+    id?: string
 }
 
 export function toCreatorProfile(data: any): CreatorProfile {

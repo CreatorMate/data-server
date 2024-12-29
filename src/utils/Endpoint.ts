@@ -28,11 +28,11 @@ export abstract class Endpoint {
         return null;
     }
 
-    protected async storeInCache(key: string, data: object) {
+    protected async storeInCache(key: string, data: any) {
         const redis = this.getRedis();
-        await redis.set(key, JSON.stringify(data), 'EX', 172800);
+        const stringified = JSON.stringify(data);
+        await redis.set(key, stringified, 'EX', 172800);
     }
-
     protected getRedis(): Redis {
         return new Redis({
             host: env?.REDIS_HOST,
