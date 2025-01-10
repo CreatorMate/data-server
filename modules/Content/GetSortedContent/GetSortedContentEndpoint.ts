@@ -4,6 +4,7 @@ import {z, ZodObject} from "zod";
 import {Context} from "hono";
 import {Post} from "../../../src/utils/Phyllo/Types/Post";
 import {APIResponse, errorResponse, successResponse} from "../../../src/utils/APIResponse/HttpResponse";
+import BrandManager from "../../../src/managers/BrandManager";
 
 export class GetSortedContentEndpoint extends Endpoint {
     protected readonly description: string = 'get a list of sorted content items, sorted by property';
@@ -22,7 +23,9 @@ export class GetSortedContentEndpoint extends Endpoint {
             return errorResponse(context, 'order must be either asc or desc')
         }
 
-        const sortedPosts = await this.getSortedContent(brand_id, ids, key, order);
+        const brandManager = new BrandManager(<number>brand_id, this.getPrisma());
+        const postsList = await brandManager.getSortedPosts(ids);
+        const sortedPosts = this.sortPosts<Post>(postsList, key as keyof Post, order as  "asc" | "desc");
 
         const amount = limit ? Number(limit) : 10;
         const currentPage = page ? Number(page) : 1;
@@ -31,54 +34,6 @@ export class GetSortedContentEndpoint extends Endpoint {
 
         const posts = sortedPosts.slice(startAt, startAt+amount);
         return successResponse(context, posts);
-    }
-
-    private async getSortedContent(brand_id: string, ids: string, key: string, order: string): Promise<Post[]> {
-        const brandPosts: Record<string, Post[]> = await this.getFromCache(`brands.${brand_id}.content`);
-        let creatorContent: Map<string, Post[]> = new Map(Object.entries(brandPosts));
-        if(!creatorContent) {
-            creatorContent = await this.getCreatorContentFromCashe(Number(brand_id));
-        }
-
-        const posts: Post[] = this.getPostsFromMap(creatorContent, ids);
-
-        return this.sortPosts<Post>(posts, key as keyof Post, order as  "asc" | "desc");
-    }
-
-    private getPostsFromMap(creatorContent: Map<string, Post[]>, ids: string): Post[] {
-        const contentList: Post[] = [];
-        let creatorIds: string[] = [];
-        if(ids) {
-            creatorIds = ids.split(',');
-        }
-        for (const [id, posts] of creatorContent.entries()) {
-            console.log(id);
-            if(creatorIds.length !== 0 && !creatorIds.includes(id)) continue;
-            contentList.push(...posts);
-        }
-
-        return contentList
-    }
-
-    private async getCreatorContentFromCashe(brand_id: number): Promise<Map<string, Post[]>> {
-        const contentMap = new Map<string, Post[]>();
-        const creators = await this.getPrisma().creators.findMany({
-            where: {
-                brand_id: <number>brand_id,
-                status: {
-                    not: 'pending'
-                },
-            }
-        });
-
-        for(const creator of creators) {
-            const posts = await this.getFromCache(`${creator.id}.content`);
-            contentMap.set(creator.id, posts);
-        }
-
-        await this.storeInCache(`brands.${brand_id}.content`, contentMap);
-
-        return contentMap;
     }
 
     private sortPosts<T extends Post>(posts: T[], key: keyof T, order: "asc" | "desc" = 'desc'): T[] {
