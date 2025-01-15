@@ -21,7 +21,6 @@ export default class CreatorManager {
         const creatorAccountReqeust: APIResponse<ConnectedAccount> = await phyllo.accounts().getAccountById(this.creatorId);
         if (!creatorAccountReqeust.success) {
             throw Error(`no creator with the id of ${this.creatorId}`);
-            return;
         }
 
         const account_id = creatorAccountReqeust.data.account_id;
@@ -30,6 +29,7 @@ export default class CreatorManager {
         const refreshContentRequest = await phyllo.content().refreshContentFor(account_id);
 
         const profileRequest: APIResponse<CreatorProfile> = await phyllo.profiles().getByAccountId(account_id);
+
         const contentRequest: APIResponse<Post[]> = await phyllo.content().getContentList(account_id, 90);
         const demographicsRequest: APIResponse<Demographics> = await phyllo.profiles().getDemographicsByAccountId(account_id);
 
@@ -46,7 +46,6 @@ export default class CreatorManager {
 
         if(!demographicsRequest.success || !profileRequest.success || !contentRequest.success) {
             throw new Error(`something went wrong while trying to sync creator: ${this.creatorId}`);
-            return;
         }
 
         return {

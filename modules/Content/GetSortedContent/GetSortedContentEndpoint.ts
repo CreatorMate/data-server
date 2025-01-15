@@ -15,7 +15,7 @@ export class GetSortedContentEndpoint extends Endpoint {
 
     protected async handle(context: Context): Promise<any> {
         const brand_id = context.req.param('id') as string;
-        let {key, order, ids, page, limit} = context.req.query();
+        let {key, order, ids, page, limit, days} = context.req.query();
 
         if(!brand_id) return errorResponse(context, 'provide a valid key');
 
@@ -24,7 +24,7 @@ export class GetSortedContentEndpoint extends Endpoint {
         }
 
         const brandManager = new BrandManager(<number>brand_id, this.getPrisma());
-        const postsList = await brandManager.getSortedPosts(ids);
+        const  postsList = await brandManager.getPosts(ids, days);
         const sortedPosts = this.sortPosts<Post>(postsList, key as keyof Post, order as  "asc" | "desc");
 
         const amount = limit ? Number(limit) : 10;

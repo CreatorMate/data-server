@@ -3,5 +3,6 @@ export enum Groups {
     Content = "Content",
     Refresh = "Refresh",
     Engagement = "Engagement",
-    Brands = "Brands"
+    Brands = "Brands",
+    Statistics = "Statistics"
 }

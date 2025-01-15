@@ -7,9 +7,9 @@ import BrandManager from "../../../src/managers/BrandManager";
 
 export class GetBrandCountryDistributionEndpoint extends Endpoint {
     protected readonly description: string = "get the country viewers distribution"
-    protected readonly group: Groups = Groups.Brands;
+    protected readonly group: Groups = Groups.Statistics;
     protected readonly method: string = "get";
-    protected readonly route: string = '/brands/:id/countries'
+    protected readonly route: string = '/brands/:id/statistics/countries'
     protected schema: ZodObject<any> = z.object({})
 
     protected async handle(context: Context) {
@@ -23,5 +23,4 @@ export class GetBrandCountryDistributionEndpoint extends Endpoint {
 
         return successResponse(context, countries);
     }
-
 }

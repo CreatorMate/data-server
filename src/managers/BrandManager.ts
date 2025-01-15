@@ -3,7 +3,7 @@ import CreatorManager from "./CreatorManager";
 import {RedisClient, useRedis} from "../lib/redis";
 import {CreatorProfile} from "../utils/Phyllo/Types/CreatorProfile";
 import {Post} from "../utils/Phyllo/Types/Post";
-import {Country} from "../utils/Phyllo/Types/Demographics";
+import {City, Country, gender_age_distribution} from "../utils/Phyllo/Types/Demographics";
 
 export default class BrandManager {
     brandId: number;
@@ -45,10 +45,79 @@ export default class BrandManager {
         this.prepareAnalytics().catch(err => console.error('Background task error:', err));
     }
 
+    private getAverageArrayValue<T>(list: T[], sumField: keyof T, valueField: keyof T, size: number): KeyValue[] {
+        const sums = {};
+        const counts = {};
+
+        for(const item of list) {
+            const type = item[sumField] as string;
+            if (!sums[type]) {
+                sums[type] = 0;
+                counts[type] = 0;
+            }
+            console.log(sums[type])
+            sums[type] += item[valueField];
+            counts[type]++;
+        }
+
+        const averages: KeyValue[] = [];
+
+        for (const field in sums) {
+            averages.push({
+                key: field,
+                value: parseFloat((sums[field] / size).toFixed(2))
+            })
+        }
+
+        return averages
+    }
+
+    public async getGenderDistribution(ids: string) {
+        const rawGenderInformation: Record<string, gender_age_distribution[]> = await this.redis.getFromCache(`brands.${this.brandId}.gender_age_distribution`);
+        let genderInformation: Map<string, gender_age_distribution[]> = new Map(Object.entries(rawGenderInformation));
+        const {items: filteredGenderInformation, size} =  this.filterCreatorsFromMap<gender_age_distribution>(genderInformation, ids);
+
+        return this.getAverageArrayValue<gender_age_distribution>(filteredGenderInformation, 'gender', 'value', size);
+    }
+
+    public async getAgeDistribution(ids: string) {
+        const rawAgeInformation: Record<string, gender_age_distribution[]> = await this.redis.getFromCache(`brands.${this.brandId}.gender_age_distribution`);
+        let ageInformation: Map<string, gender_age_distribution[]> = new Map(Object.entries(rawAgeInformation));
+        const {items: filteredAgeInformation, size} =  this.filterCreatorsFromMap<gender_age_distribution>(ageInformation, ids);
+
+        return this.getAverageArrayValue<gender_age_distribution>(filteredAgeInformation, 'age_range', 'value', size);
+    }
+
+    public async getAgeGenderDistribution(ids: string) {
+        const rawAgeInformation: Record<string, gender_age_distribution[]> = await this.redis.getFromCache(`brands.${this.brandId}.gender_age_distribution`);
+        let ageInformation: Map<string, gender_age_distribution[]> = new Map(Object.entries(rawAgeInformation));
+        const {items: filteredAgeInformation, size} =  this.filterCreatorsFromMap<gender_age_distribution>(ageInformation, ids);
+
+        const ageSums = {};
+        const ageCounts = {};
+
+        filteredAgeInformation.forEach(({ age_range, gender,  value }) => {
+            const type = `${gender} - ${age_range}`
+            if (!ageSums[type]) {
+                ageSums[type] = 0;
+                ageCounts[type] = 0;
+            }
+            ageSums[type] += value;
+            ageCounts[type]++;
+        });
+
+        const averages = {};
+        for (const age_range in ageSums) {
+            averages[age_range] = parseFloat((ageSums[age_range] / size).toFixed(2));
+        }
+
+        return averages;
+    }
+
     public async getAverageCountryDistribution(ids: string) {
-        const brandPosts: Record<string, Country[]> = await this.redis.getFromCache(`brands.${this.brandId}.countries`);
-        let creatorContent: Map<string, Country[]> = new Map(Object.entries(brandPosts));
-        const {items: countries, size} =  this.filterCreatorsFromMap<Country>(creatorContent, ids);
+        const countryCache: Record<string, Country[]> = await this.redis.getFromCache(`brands.${this.brandId}.countries`);
+        let rawCountryStats: Map<string, Country[]> = new Map(Object.entries(countryCache));
+        const {items: countries, size} =  this.filterCreatorsFromMap<Country>(rawCountryStats, ids);
 
         const countrySums = {};
         const countryCounts = {};
@@ -71,14 +140,67 @@ export default class BrandManager {
         return averages;
     }
 
-    public async getSortedPosts(ids: string) {
+    public async getAverageCityDistribution(ids: string) {
+        const cityCache: Record<string, City[]> = await this.redis.getFromCache(`brands.${this.brandId}.cities`);
+        let rawCityStats: Map<string, City[]> = new Map(Object.entries(cityCache));
+        const {items: cities, size} =  this.filterCreatorsFromMap<City>(rawCityStats, ids);
+
+        return this.getAverageArrayValue<City>(cities, 'name', 'value', size);
+    }
+
+    public async getPosts(ids: string, amountOfDays = "") {
+        let days = 90;
+        if(amountOfDays) days = <number>amountOfDays;
         const brandPosts: Record<string, Post[]> = await this.redis.getFromCache(`brands.${this.brandId}.content`);
         let creatorContent: Map<string, Post[]> = new Map(Object.entries(brandPosts));
-        return this.filterCreatorsFromMap<Post>(creatorContent, ids);
+        const {items: filteredPosts, size} = this.filterCreatorsFromMap<Post>(creatorContent, ids);
+        const dateFilter = this.filterDaysFromList<Post>('published_at', filteredPosts, days);
+
+        return dateFilter;
+    }
+
+    public async getFollowers(ids: string): Promise<number> {
+        const brandProfiles: CreatorProfile[] = await this.redis.getFromCache(`brands.${this.brandId}.profiles`);
+        let followers = 0;
+        let creatorIds: string[] = [];
+        if(ids) {
+            creatorIds = ids.split(',');
+        }
+        for(const profile of brandProfiles) {
+            if(creatorIds.length > 0 && !creatorIds.includes(profile.id ?? '?')) continue;
+            followers += profile.followers;
+        }
+
+        return followers;
     }
 
     private async prepareAnalytics() {
 
+    }
+
+    private filterDaysFromList<T>(key: keyof T, items: T[], days: number) {
+        const filteredItems = [];
+        for (const item of items) {
+            const currentDate = new Date();
+            const checkDate = new Date();
+            //@ts-ignore
+            let publishedDate = new Date(item[key]);
+            checkDate.setDate(currentDate.getDate() - days)
+            if(publishedDate < checkDate) continue;
+
+            filteredItems.push(item);
+
+        }
+        return filteredItems;
+    }
+
+    public getAverageField<T>(list: Post[], key: string): number {
+        let value = 0;
+        for(const item of list) {
+            //@ts-ignore
+            value += item[key]
+        }
+        return parseFloat((value / list.length).toFixed(2));
     }
 
     private filterCreatorsFromMap<T>(contentMap: Map<string, T[]>, ids: string) {
@@ -92,7 +214,6 @@ export default class BrandManager {
         for (const [id, content] of contentMap.entries()) {
             if(creatorIds.length !== 0 && !creatorIds.includes(id)) continue;
             size++;
-            console.log(content);
             contentList.push(...content);
         }
 
@@ -109,4 +230,9 @@ export default class BrandManager {
             }
         });
     }
+}
+
+type KeyValue = {
+    key: string,
+    value: number
 }
