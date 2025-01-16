@@ -13,7 +13,7 @@ export class GetBrandAgeDistributionEndpoint extends Endpoint {
     protected schema: ZodObject<any> = z.object({})
 
     protected async handle(context: Context) {
-        const brandId = context.req.param('id') as string;
+        const brandId = context.req.param('id') as unknown;
         let {ids} = context.req.query();
 
         if(!brandId) return errorResponse(context, 'provide a valid key');

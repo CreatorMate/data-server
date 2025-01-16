@@ -14,14 +14,14 @@ export class GetBrandReachPerContentTypeEndpoint extends Endpoint{
     protected schema: ZodObject<any> = z.object({});
 
     protected async handle(context: Context) {
-        const id = context.req.param('id')
+        const id = context.req.param('id') as unknown
         const { ids, days} = context.req.query();
 
         const brandManager = new BrandManager(<number>id, this.getPrisma());
         const posts: Post[] = await brandManager.getPosts(ids, days);
 
-        const reachSums = {};
-        const reachCount = {};
+        const reachSums: {[key: string]: number} = {};
+        const reachCount: {[key: string]: number} = {};
 
         posts.forEach(({ reach, type }) => {
             if (!reachSums[type]) {

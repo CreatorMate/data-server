@@ -18,10 +18,10 @@ export default class BrandManager {
     }
 
     public async syncBrand() {
-        const brandContentMap = {};
-        const brandCountries = {};
-        const brandCities = {};
-        const brandAgeAndGender = {};
+        const brandContentMap: {[key: string]: Post[]} = {};
+        const brandCountries: {[key: string]: Country[]} = {};
+        const brandCities: {[key: string]: City[]} = {};
+        const brandAgeAndGender: {[key: string]: gender_age_distribution[]} = {};
         const brandProfilesList: CreatorProfile[] = [];
         const creators = await this.getActiveCreators();
 
@@ -46,17 +46,17 @@ export default class BrandManager {
     }
 
     private getAverageArrayValue<T>(list: T[], sumField: keyof T, valueField: keyof T, size: number): KeyValue[] {
-        const sums = {};
-        const counts = {};
+        const sums: {[key: string]: number}  = {};
+        const counts: {[key: string]: number}  = {};
 
         for(const item of list) {
             const type = item[sumField] as string;
+            const value = item[sumField] as number;
             if (!sums[type]) {
                 sums[type] = 0;
                 counts[type] = 0;
             }
-            console.log(sums[type])
-            sums[type] += item[valueField];
+            sums[type] += value;
             counts[type]++;
         }
 
@@ -93,8 +93,8 @@ export default class BrandManager {
         let ageInformation: Map<string, gender_age_distribution[]> = new Map(Object.entries(rawAgeInformation));
         const {items: filteredAgeInformation, size} =  this.filterCreatorsFromMap<gender_age_distribution>(ageInformation, ids);
 
-        const ageSums = {};
-        const ageCounts = {};
+        const ageSums: {[key: string]: number}  = {};
+        const ageCounts: {[key: string]: number}  = {};
 
         filteredAgeInformation.forEach(({ age_range, gender,  value }) => {
             const type = `${gender} - ${age_range}`
@@ -106,7 +106,7 @@ export default class BrandManager {
             ageCounts[type]++;
         });
 
-        const averages = {};
+        const averages: {[key: string]: number}  = {};
         for (const age_range in ageSums) {
             averages[age_range] = parseFloat((ageSums[age_range] / size).toFixed(2));
         }
@@ -119,8 +119,8 @@ export default class BrandManager {
         let rawCountryStats: Map<string, Country[]> = new Map(Object.entries(countryCache));
         const {items: countries, size} =  this.filterCreatorsFromMap<Country>(rawCountryStats, ids);
 
-        const countrySums = {};
-        const countryCounts = {};
+        const countrySums: {[key: string]: number}  = {};
+        const countryCounts: {[key: string]: number}  = {};
 
         countries.forEach(({ code, value }) => {
             if (!countrySums[code]) {
@@ -131,7 +131,7 @@ export default class BrandManager {
             countryCounts[code]++;
         });
 
-        const averages = {};
+        const averages: {[key: string]: number} = {};
         for (const code in countrySums) {
             // Include 0 for accounts where the country is missing
             averages[code] = parseFloat((countrySums[code] / size).toFixed(2));
@@ -148,9 +148,9 @@ export default class BrandManager {
         return this.getAverageArrayValue<City>(cities, 'name', 'value', size);
     }
 
-    public async getPosts(ids: string, amountOfDays = "") {
+    public async getPosts(ids: string, amountOfDays: unknown = "") {
         let days = 90;
-        if(amountOfDays) days = <number>amountOfDays;
+        if(amountOfDays) days = amountOfDays as number;
         const brandPosts: Record<string, Post[]> = await this.redis.getFromCache(`brands.${this.brandId}.content`);
         let creatorContent: Map<string, Post[]> = new Map(Object.entries(brandPosts));
         const {items: filteredPosts, size} = this.filterCreatorsFromMap<Post>(creatorContent, ids);
@@ -179,12 +179,12 @@ export default class BrandManager {
     }
 
     private filterDaysFromList<T>(key: keyof T, items: T[], days: number) {
-        const filteredItems = [];
+        const filteredItems: T[] = [];
         for (const item of items) {
+            const fieldValue = item[key] as string;
             const currentDate = new Date();
             const checkDate = new Date();
-            //@ts-ignore
-            let publishedDate = new Date(item[key]);
+            let publishedDate = new Date(fieldValue);
             checkDate.setDate(currentDate.getDate() - days)
             if(publishedDate < checkDate) continue;
 
@@ -194,11 +194,11 @@ export default class BrandManager {
         return filteredItems;
     }
 
-    public getAverageField<T>(list: Post[], key: string): number {
+    public getAverageField<T>(list: T[], key: keyof T): number {
         let value = 0;
         for(const item of list) {
-            //@ts-ignore
-            value += item[key]
+            const fieldValue = item[key] as number;
+            value += fieldValue;
         }
         return parseFloat((value / list.length).toFixed(2));
     }

@@ -14,7 +14,7 @@ export class GetSortedContentEndpoint extends Endpoint {
     protected schema: ZodObject<any> = z.object({});
 
     protected async handle(context: Context): Promise<any> {
-        const brand_id = context.req.param('id') as string;
+        const brand_id = context.req.param('id') as unknown;
         let {key, order, ids, page, limit, days} = context.req.query();
 
         if(!brand_id) return errorResponse(context, 'provide a valid key');

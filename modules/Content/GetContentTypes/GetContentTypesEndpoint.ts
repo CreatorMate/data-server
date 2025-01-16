@@ -14,7 +14,7 @@ export class GetContentTypesEndpoint extends Endpoint {
     protected schema: ZodObject<any> = z.object({});
 
     protected async handle(context: Context): Promise<any> {
-        const brand_id = context.req.param('id') as string;
+        const brand_id = context.req.param('id') as unknown;
         let {ids, days} = context.req.query();
 
         const brandManager = new BrandManager(<number>brand_id, this.getPrisma());

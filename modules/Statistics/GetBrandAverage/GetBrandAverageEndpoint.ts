@@ -14,7 +14,7 @@ export class GetBrandAverageEndpoint extends Endpoint{
     protected schema: ZodObject<any> = z.object({});
 
     protected async handle(context: Context) {
-        const id = context.req.param('id')
+        const id = context.req.param('id') as unknown
         const {key, ids, days} = context.req.query();
         if(!key) {
             return errorResponse(context, 'must be given a key');
@@ -22,7 +22,7 @@ export class GetBrandAverageEndpoint extends Endpoint{
 
         const brandManager = new BrandManager(<number>id, this.getPrisma());
         const posts: Post[] = await brandManager.getPosts(ids, days);
-        const average = brandManager.getAverageField<Post>(posts, key);
+        const average = brandManager.getAverageField<Post>(posts, key as keyof Post);
 
         return successResponse(context, {
             average: average
