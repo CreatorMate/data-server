@@ -51,7 +51,8 @@ export default class BrandManager {
 
         for(const item of list) {
             const type = item[sumField] as string;
-            const value = item[sumField] as number;
+            const value = item[valueField] as number;
+            console.log(value);
             if (!sums[type]) {
                 sums[type] = 0;
                 counts[type] = 0;
