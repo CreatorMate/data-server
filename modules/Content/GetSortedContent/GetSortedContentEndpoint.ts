@@ -24,7 +24,7 @@ export class GetSortedContentEndpoint extends Endpoint {
         }
 
         const brandManager = new BrandManager(<number>brand_id, this.getPrisma());
-        const  postsList = await brandManager.getPosts(ids, days);
+        const  postsList= await brandManager.getPosts(ids, days);
         const sortedPosts = this.sortPosts<Post>(postsList, key as keyof Post, order as  "asc" | "desc");
 
         const amount = limit ? Number(limit) : 10;

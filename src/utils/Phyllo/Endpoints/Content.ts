@@ -5,7 +5,7 @@ import {formatDate} from "../../../lib/utils";
 import {CreatorProfile} from "../Types/CreatorProfile";
 
 export class Content extends PhylloEndpoint {
-    public async getContentList(account_id: string, days = 30): Promise<APIResponse> {
+    public async getContentList(account_id: string, profile: CreatorProfile, days = 30): Promise<APIResponse> {
         const currentDate = new Date();
         let pastDate = new Date(currentDate);
 
@@ -17,32 +17,32 @@ export class Content extends PhylloEndpoint {
 
         const posts: Post[] = [];
         for (const post of contentRequest.data.data) {
-            posts.push(toPost(post));
+            posts.push(toPost(post, profile));
         }
         contentRequest.data = posts;
 
         return contentRequest;
     }
 
-    public async getContentById(content_id: string): Promise<APIResponse> {
-        const contentRequest = await this.fetch('GET', `/social/contents/${content_id}`);
-        if (!contentRequest.success) return contentRequest;
-        contentRequest.data = toPost(contentRequest.data);
-        return contentRequest;
-    }
+    // public async getContentById(content_id: string): Promise<APIResponse> {
+    //     const contentRequest = await this.fetch('GET', `/social/contents/${content_id}`);
+    //     if (!contentRequest.success) return contentRequest;
+    //     contentRequest.data = toPost(contentRequest.data);
+    //     return contentRequest;
+    // }
 
-    public async getContentByIds(ids: string[]) {
-        const contentRequest = await this.fetch('POST', `/social/contents/search`, {
-            ids: ids
-        });
-        if (!contentRequest.success) return contentRequest;
-        const posts: Post[] = [];
-        for (const post of contentRequest.data.data) {
-            posts.push(toPost(post));
-        }
-        contentRequest.data = posts;
-        return contentRequest;
-    }
+    // public async getContentByIds(ids: string[]) {
+    //     const contentRequest = await this.fetch('POST', `/social/contents/search`, {
+    //         ids: ids
+    //     });
+    //     if (!contentRequest.success) return contentRequest;
+    //     const posts: Post[] = [];
+    //     for (const post of contentRequest.data.data) {
+    //         posts.push(toPost(post));
+    //     }
+    //     contentRequest.data = posts;
+    //     return contentRequest;
+    // }
 
     public async refreshContentFor(account_id: string): Promise<APIResponse> {
         return await this.fetch('POST', '/social/contents/refresh', {

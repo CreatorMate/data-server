@@ -81,7 +81,7 @@ export default class BrandManager {
         return this.getAverageArrayValue<gender_age_distribution>(filteredGenderInformation, 'gender', 'value', size);
     }
 
-    public async getAgeDistribution(ids: string) {
+    public async getAgeDistribution(ids: string, days: string) {
         const rawAgeInformation: Record<string, gender_age_distribution[]> = await this.redis.getFromCache(`brands.${this.brandId}.gender_age_distribution`);
         let ageInformation: Map<string, gender_age_distribution[]> = new Map(Object.entries(rawAgeInformation));
         const {items: filteredAgeInformation, size} =  this.filterCreatorsFromMap<gender_age_distribution>(ageInformation, ids);

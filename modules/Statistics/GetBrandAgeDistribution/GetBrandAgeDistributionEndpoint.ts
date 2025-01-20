@@ -10,16 +10,16 @@ export class GetBrandAgeDistributionEndpoint extends Endpoint {
     protected readonly group: Groups = Groups.Statistics;
     protected readonly method: string = "get";
     protected readonly route: string = '/brands/:id/statistics/ages'
-    protected schema: ZodObject<any> = z.object({})
+    protected schema: ZodObject<any> = z.object({});
 
     protected async handle(context: Context) {
         const brandId = context.req.param('id') as unknown;
-        let {ids} = context.req.query();
+        let {ids, days} = context.req.query();
 
         if(!brandId) return errorResponse(context, 'provide a valid key');
 
         const brandManager = new BrandManager(<number>brandId, this.getPrisma());
-        const ageDistribution = await brandManager.getAgeDistribution(ids);
+        const ageDistribution = await brandManager.getAgeDistribution(ids, days);
 
         return successResponse(context, ageDistribution);
     }

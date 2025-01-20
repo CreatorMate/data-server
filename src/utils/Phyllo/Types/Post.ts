@@ -23,11 +23,13 @@ export type Post = {
     replays: number | null,
     shares: number,
     additional_info: { profile_visits: number, bio_link_clicked: number | null, followers_gained: number } | null,
-    engagement: number
+    engagement: number,
+    user_picture: string,
+    posted_by: string,
 }
 
-export function toPost(data: any): Post {
-    const post = {
+export function toPost(data: any, profile: CreatorProfile): Post {
+    const post: Post = {
         id: data.id,
         updated_at: data.updated_at,
         title: data.title,
@@ -51,11 +53,16 @@ export function toPost(data: any): Post {
         shares: data.engagement.share_count,
         additional_info: data.engagement.additional_info,
         engagement: 0,
+        posted_by: '',
+        user_picture: '',
     }
 
     let interactions = post.likes + post.comments + post.shares + post.saves;
     let engagement = (interactions / post.reach) * 100;
     post.engagement = parseFloat((engagement).toFixed(2));
+
+    post.posted_by = profile.username;
+    post.user_picture = profile.picture;
 
     return post;
 }
