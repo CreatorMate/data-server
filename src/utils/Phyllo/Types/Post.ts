@@ -26,6 +26,8 @@ export type Post = {
     engagement: number,
     user_picture: string,
     posted_by: string,
+    reach_rate: number,
+    active_engagement: number,
 }
 
 export function toPost(data: any, profile: CreatorProfile): Post {
@@ -55,11 +57,20 @@ export function toPost(data: any, profile: CreatorProfile): Post {
         engagement: 0,
         posted_by: '',
         user_picture: '',
+        reach_rate: 0,
+        active_engagement: 0
     }
 
     let interactions = post.likes + post.comments + post.shares + post.saves;
     let engagement = (interactions / post.reach) * 100;
     post.engagement = parseFloat((engagement).toFixed(2));
+
+    let activeInteractions = post.comments + post.saves + post.shares;
+    let activeEngagement = (activeInteractions / post.reach) * 100;
+    post.active_engagement = parseFloat((activeEngagement).toFixed(2));
+
+    let reachRate = (post.reach / profile.followers) * 100;
+    post.reach_rate = parseFloat((reachRate).toFixed(2));
 
     post.posted_by = profile.username;
     post.user_picture = profile.picture;

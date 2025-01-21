@@ -34,7 +34,7 @@ export default class CreatorManager {
             throw new Error('invalid creator account');
         }
 
-        const contentRequest: APIResponse<Post[]> = await phyllo.content().getContentList(account_id, profileRequest.data, 90,);
+        const contentRequest: APIResponse<Post[]> = await phyllo.content().getContentList(account_id, profileRequest.data, 365);
         const demographicsRequest: APIResponse<Demographics> = await phyllo.profiles().getDemographicsByAccountId(account_id);
 
         if (contentRequest.success) {
