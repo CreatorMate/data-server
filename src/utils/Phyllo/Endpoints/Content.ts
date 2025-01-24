@@ -5,11 +5,13 @@ import {formatDate} from "../../../lib/utils";
 import {CreatorProfile} from "../Types/CreatorProfile";
 
 export class Content extends PhylloEndpoint {
-    public async getContentList(account_id: string, profile: CreatorProfile, days = 30): Promise<APIResponse> {
+    public async getContentList(account_id: string, profile: CreatorProfile, days = 365): Promise<APIResponse> {
         const currentDate = new Date();
         let pastDate = new Date(currentDate);
 
         pastDate.setDate(currentDate.getDate() - days);
+
+        console.log(`/social/contents?account_id=${account_id}&to_date=${formatDate(currentDate)}&from_date=${formatDate(pastDate)}&limit=100`);
 
         const contentRequest: APIResponse<any> = await this.fetch('GET', `/social/contents?account_id=${account_id}&to_date=${formatDate(currentDate)}&from_date=${formatDate(pastDate)}&limit=100`);
 

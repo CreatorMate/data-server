@@ -10,13 +10,27 @@ import {Demographics} from "../utils/Phyllo/Types/Demographics";
 export default class CreatorManager {
     creatorId: string;
     redis: RedisClient;
+    prismaClient: PrismaClient;
 
     constructor(creatorId: string, prismaClient: PrismaClient) {
         this.creatorId = creatorId;
         this.redis = useRedis();
+        this.prismaClient = prismaClient;
     }
 
-    async syncCreator(): Promise<{posts: Post[], profile: CreatorProfile, demographics: Demographics}> {
+    public async getCreatorProfile() {
+        return this.redis.getFromCache(`${this.creatorId}.profile`);
+    }
+
+    public async getCreatorPosts() {
+        return this.redis.getFromCache(`${this.creatorId}.content`);
+    }
+
+    public async getCreatorDemographics() {
+        return this.redis.getFromCache(`${this.creatorId}.demographics`);
+    }
+
+    public async syncCreator(): Promise<boolean> {
         const phyllo =  new PhylloClient();
         const creatorAccountReqeust: APIResponse<ConnectedAccount> = await phyllo.accounts().getAccountById(this.creatorId);
         if (!creatorAccountReqeust.success) {
@@ -34,10 +48,16 @@ export default class CreatorManager {
             throw new Error('invalid creator account');
         }
 
+        await this.prismaClient.creators.update({
+            where: {id: this.creatorId},
+            data: {username: profileRequest.data.username}
+        })
+
         const contentRequest: APIResponse<Post[]> = await phyllo.content().getContentList(account_id, profileRequest.data, 365);
         const demographicsRequest: APIResponse<Demographics> = await phyllo.profiles().getDemographicsByAccountId(account_id);
 
         if (contentRequest.success) {
+            console.log(contentRequest.data.length);
             await this.redis.storeInCache(`${this.creatorId}.content`, contentRequest.data);
         }
         if (profileRequest.success) {
@@ -45,17 +65,13 @@ export default class CreatorManager {
             await this.redis.storeInCache(`${this.creatorId}.profile`, profileRequest.data);
         }
         if(demographicsRequest.success) {
-            await this.redis.storeInCache(`${this.creatorId}.demographics`, demographicsRequest);
+            await this.redis.storeInCache(`${this.creatorId}.demographics`, demographicsRequest.data);
         }
 
         if(!demographicsRequest.success || !profileRequest.success || !contentRequest.success) {
             throw new Error(`something went wrong while trying to sync creator: ${this.creatorId}`);
         }
 
-        return {
-            posts: contentRequest.data,
-            profile: profileRequest.data,
-            demographics: demographicsRequest.data
-        }
+        return true;
     }
 }

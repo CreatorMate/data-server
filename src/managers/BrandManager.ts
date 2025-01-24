@@ -27,13 +27,14 @@ export default class BrandManager {
 
         for (const creator of creators) {
             const creatorManager = new CreatorManager(creator.id, this.prismaClient);
-            const creatorData = await creatorManager.syncCreator();
-
-            brandProfilesList.push(creatorData.profile);
-            brandContentMap[creator.id] = creatorData.posts;
-            brandCountries[creator.id] = creatorData.demographics.countries;
-            brandCities[creator.id] = creatorData.demographics.cities;
-            brandAgeAndGender[creator.id] = creatorData.demographics.gender_age_distribution;
+            const profile = await creatorManager.getCreatorProfile();
+            const content = await creatorManager.getCreatorPosts();
+            const demographics = await creatorManager.getCreatorDemographics();
+            brandProfilesList.push(profile);
+            brandContentMap[creator.id] = content;
+            brandCountries[creator.id] = demographics.countries;
+            brandCities[creator.id] = demographics.cities;
+            brandAgeAndGender[creator.id] = demographics.gender_age_distribution;
         }
 
         await this.redis.storeInCache(`brands.${this.brandId}.content`, brandContentMap);
@@ -52,7 +53,6 @@ export default class BrandManager {
         for(const item of list) {
             const type = item[sumField] as string;
             const value = item[valueField] as number;
-            console.log(value);
             if (!sums[type]) {
                 sums[type] = 0;
                 counts[type] = 0;
@@ -153,6 +153,11 @@ export default class BrandManager {
         let days = 90;
         if(amountOfDays) days = amountOfDays as number;
         const brandPosts: Record<string, Post[]> = await this.redis.getFromCache(`brands.${this.brandId}.content`);
+        for (const key in brandPosts) {
+            if (!Array.isArray(brandPosts[key])) {
+                brandPosts[key] = [];
+            }
+        }
         let creatorContent: Map<string, Post[]> = new Map(Object.entries(brandPosts));
         const {items: filteredPosts, size} = this.filterCreatorsFromMap<Post>(creatorContent, ids);
         const dateFilter = this.filterDaysFromList<Post>('published_at', filteredPosts, days);
@@ -222,13 +227,18 @@ export default class BrandManager {
     }
 
     public async getActiveCreators() {
-        return this.prismaClient.creators.findMany({
+         return this.prismaClient.creators.findMany({
             where: {
-                brand_id: this.brandId,
-                status: {
-                    not: 'pending'
-                }
-            }
+                creator_brand: {
+                    some: {
+                        brand_id: this.brandId,
+                        accepted: true,
+                    },
+                },
+            },
+            include: {
+                creator_brand: true, // Optional: include relationship data
+            },
         });
     }
 }
