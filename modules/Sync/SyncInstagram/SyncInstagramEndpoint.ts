@@ -35,7 +35,7 @@ export class SyncInstagramEndpoint extends Endpoint {
         const brands = await this.getPrisma().brands.findMany();
         for (const brand of brands) {
             const brandManager = new BrandManager(brand.id, this.getPrisma());
-            brandManager.syncBrand().catch(err => console.error(`Brand ${brand.id} sync task error:`, err));
+            await brandManager.syncBrand();
         }
     }
 }

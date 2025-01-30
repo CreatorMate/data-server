@@ -48,11 +48,6 @@ export default class CreatorManager {
             throw new Error('invalid creator account');
         }
 
-        await this.prismaClient.creators.update({
-            where: {id: this.creatorId},
-            data: {username: profileRequest.data.username}
-        })
-
         const contentRequest: APIResponse<Post[]> = await phyllo.content().getContentList(account_id, profileRequest.data, 365);
         const demographicsRequest: APIResponse<Demographics> = await phyllo.profiles().getDemographicsByAccountId(account_id);
 

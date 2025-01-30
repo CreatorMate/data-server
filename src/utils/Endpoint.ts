@@ -5,8 +5,7 @@ import jsonContent from "./OpenAPI/JsonContent";
 import {Groups} from "../lib/enums";
 import {PrismaClient} from "@prisma/client"
 import {PhylloClient} from "./Phyllo/PhylloClient";
-import Redis from "ioredis";
-import env from "../env";
+import {RedisClient, useRedis} from "../lib/redis";
 
 export abstract class Endpoint {
     protected abstract readonly group: Groups;
@@ -18,31 +17,14 @@ export abstract class Endpoint {
     protected abstract handle(context: Context): any
 
     protected async getFromCache(key: string) {
-        const redis = this.getRedis();
-        const redisItem = await redis.get(key);
-        if(!redisItem) return null;
-        let cachedItem = JSON.parse(redisItem);
-        if (cachedItem && Object.keys(cachedItem).length > 0) {
-            return cachedItem;
-        }
-        return null;
+        return await this.getRedis().getFromCache(key);
     }
 
     protected async storeInCache(key: string, data: any) {
-        const redis = this.getRedis();
-        const stringified = JSON.stringify(data);
-        await redis.set(key, stringified, 'EX', 172800);
+        return await this.getRedis().storeInCache(key, data);
     }
-    protected getRedis(): Redis {
-        return new Redis({
-            host: env?.REDIS_HOST,
-            //@ts-ignore
-            port: env?.REDIS_PORT,
-            //@ts-ignore
-            password: env?.REDIS_PASSWORD,
-            //@ts-ignore
-            tls: {},
-        });
+    protected getRedis(): RedisClient {
+        return useRedis();
     }
 
     private supportedMethods = ['get', 'post', 'put', 'delete', 'patch', 'options'];

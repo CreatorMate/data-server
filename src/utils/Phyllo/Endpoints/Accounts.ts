@@ -14,7 +14,7 @@ export class Accounts extends PhylloEndpoint {
             if(!creator) return {success: false, error: 'no creator with this id'};
 
             const phylloConnection = await prismaClient.phyllo_connections.findFirst({
-                where: {id: creator.waitlist_id}
+                where: {id: creator.id}
             });
 
             if(!phylloConnection) return {success: false, error: 'this creator has not coupled an instagram account'};
