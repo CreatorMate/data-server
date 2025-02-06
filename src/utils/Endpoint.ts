@@ -6,6 +6,7 @@ import {Groups} from "../lib/enums";
 import {PrismaClient} from "@prisma/client"
 import {PhylloClient} from "./Phyllo/PhylloClient";
 import {RedisClient, useRedis} from "../lib/redis";
+import {usePrisma} from "../lib/prisma";
 
 export abstract class Endpoint {
     protected abstract readonly group: Groups;
@@ -30,7 +31,7 @@ export abstract class Endpoint {
     private supportedMethods = ['get', 'post', 'put', 'delete', 'patch', 'options'];
 
     public getPrisma(): PrismaClient {
-        return new PrismaClient();
+        return usePrisma();
     }
 
     public getPhyllo(): PhylloClient {

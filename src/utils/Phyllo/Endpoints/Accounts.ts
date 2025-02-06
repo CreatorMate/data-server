@@ -1,11 +1,12 @@
 import {PhylloEndpoint} from "../PhylloEndpoint";
 import {APIResponse, errorResponse} from "../../APIResponse/HttpResponse";
 import {PrismaClient} from "@prisma/client";
+import {usePrisma} from "../../../lib/prisma";
 
 export class Accounts extends PhylloEndpoint {
     public async getAccountById(id: string): Promise<APIResponse> {
         try {
-            const prismaClient = new PrismaClient();
+            const prismaClient = usePrisma();
             const creator = await prismaClient.creators.findFirst({
                 //@ts-ignore
                 where: {id: id}

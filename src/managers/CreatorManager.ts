@@ -56,6 +56,12 @@ export default class CreatorManager {
             await this.redis.storeInCache(`${this.creatorId}.content`, contentRequest.data);
         }
         if (profileRequest.success) {
+            await this.prismaClient.creators.update({
+                where: {id: this.creatorId},
+                data: {
+                    handle: profileRequest.data.username
+                }
+            })
             profileRequest.data.id = this.creatorId;
             await this.redis.storeInCache(`${this.creatorId}.profile`, profileRequest.data);
         }
