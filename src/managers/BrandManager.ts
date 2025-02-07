@@ -46,6 +46,34 @@ export default class BrandManager {
         this.prepareAnalytics().catch(err => console.error('Background task error:', err));
     }
 
+    public async addPostsToBrand(creatorId: string, posts: any) {
+        const brandPosts = await this.redis.getFromCache(`brands.${this.brandId}.content`);
+        brandPosts[creatorId] = posts;
+
+        await this.redis.storeInCache(`brands.${this.brandId}.content`, brandPosts);
+    }
+
+    public async addDemographicsToBrand(creatorId: string, demographics: any) {
+        const brandAgeAndGender = await this.redis.getFromCache(`brands.${this.brandId}.gender_age_distribution`);
+        const brandCities = await this.redis.getFromCache(`brands.${this.brandId}.cities`);
+        const brandCountries = await this.redis.getFromCache(`brands.${this.brandId}.countries`);
+
+        brandCountries[creatorId] = demographics.countries;
+        brandCities[creatorId] = demographics.cities;
+        brandAgeAndGender[creatorId] = demographics.gender_age_distribution;
+
+        await this.redis.storeInCache(`brands.${this.brandId}.countries`, brandCountries);
+        await this.redis.storeInCache(`brands.${this.brandId}.cities`, brandCities);
+        await this.redis.storeInCache(`brands.${this.brandId}.gender_age_distribution`, brandAgeAndGender);
+    }
+
+    public async addProfilesToBrand(creatorId: string, profile: any) {
+        const brandProfiles: CreatorProfile[] = await this.redis.getFromCache(`brands.${this.brandId}.profiles`);
+        //@ts-ignore
+        brandProfiles[creatorId] = profile;
+        await this.redis.storeInCache(`brands.${this.brandId}.profiles`, brandProfiles);
+    }
+
     private getAverageArrayValue<T>(list: T[], sumField: keyof T, valueField: keyof T, size: number): KeyValue[] {
         const sums: {[key: string]: number}  = {};
         const counts: {[key: string]: number}  = {};

@@ -51,8 +51,6 @@ export class Content extends PhylloEndpoint {
             account_id: account_id
         })
     }
-
-
     public async getCommentsByAccountId(account_id: string, content_id: string): Promise<APIResponse> {
         return await this.fetch('GET', `/social/comments?account_id=${account_id}&content_id=${content_id}`);
     }
