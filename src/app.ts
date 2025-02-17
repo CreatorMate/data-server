@@ -8,7 +8,6 @@ import {successResponse} from "./utils/APIResponse/HttpResponse";
 const app: OpenAPIHono = createApp();
 
 configureOpenAPI(app);
-
 app.get('/check', (c: Context) => {
     return successResponse(c, 'im here')
 });
