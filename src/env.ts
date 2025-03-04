@@ -18,13 +18,17 @@ const EnvSchema = z.object({
     MAILER_HOST: z.string(),
     MAILER_PORT: z.coerce.number().default(465),
     MAILER_USER: z.string(),
+    META_CLIENT_ID: z.string(),
+    META_REDIRECT_URL: z.string(),
+    META_CLIENT_SECRET: z.string(),
+    AZURE_AI_KEY: z.string()
 });
 
 export type env = z.infer<typeof EnvSchema>;
 
 const {data: env, error} = EnvSchema.safeParse(process.env);
 
-if(error) {
+if (error) {
     console.error("❌ Invalid env:");
     console.error(JSON.stringify(error.flatten().fieldErrors, null, 2));
     process.exit(1);
