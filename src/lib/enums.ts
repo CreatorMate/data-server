@@ -4,5 +4,6 @@ export enum Groups {
     Refresh = "Refresh",
     Engagement = "Engagement",
     Brands = "Brands",
-    Statistics = "Statistics"
+    Statistics = "Statistics",
+    Creators = "Creators",
 }

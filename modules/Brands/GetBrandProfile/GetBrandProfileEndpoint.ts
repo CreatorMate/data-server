@@ -29,7 +29,7 @@ export class GetBrandProfileEndpoint extends Endpoint {
 
         if(!brand || !brand.instagram_accounts) return errorResponse(context, 'BRAND_NOT_FOUND');
 
-        const brandCache = await this.getRedis().getFromCache(`brands.${id}.profile`);
+        const brandCache = await this.getRedis().getFromCache(`${id}.profile`);
 
         if(brandCache) {
            return successResponse(context, brandCache)
@@ -37,7 +37,7 @@ export class GetBrandProfileEndpoint extends Endpoint {
 
         const accessToken = decrypt(brand.instagram_accounts.token);
 
-        const brandProfile = await InstagramConnector.accounts().getBrandProfile(accessToken, brand.id);
+        const brandProfile = await InstagramConnector.accounts().getProfile(accessToken, brand.id);
         if(!brandProfile.success) return errorResponse(context, brandProfile.error);
 
         return successResponse(context, brandProfile.data);

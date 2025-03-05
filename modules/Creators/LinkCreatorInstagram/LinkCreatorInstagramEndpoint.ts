@@ -5,14 +5,13 @@ import {Context} from "hono";
 import {APIResponse, errorResponse, successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 import env from "../../../src/env";
 import {InstagramConnector} from "../../../src/utils/InstagramConnector/InstagramConnector";
-import {InstagramEndpoint} from "../../../src/utils/InstagramConnector/InstagramEndpoint";
 import {encrypt} from "../../../src/utils/Encryption/Encryptor";
 
-export class LinkInstagramEndpoint extends Endpoint {
+export class LinkCreatorInstagramEndpoint extends Endpoint {
     protected readonly description: string = "link an instagram account for a brand."
-    protected readonly group: Groups = Groups.Brands;
+    protected readonly group: Groups = Groups.Creators;
     protected readonly method: string = "post";
-    protected readonly route: string = '/brands/:id/instagram';
+    protected readonly route: string = '/creators/:id/instagram';
     protected schema: ZodObject<any> = z.object({});
 
     protected async handle(context: Context) {
@@ -20,11 +19,11 @@ export class LinkInstagramEndpoint extends Endpoint {
         const {code} = await context.req.json();
 
         if(!code || !id) return errorResponse(context, 'INVALID_REQUEST');
-        const brand = await this.getPrisma().brands.findFirst({
-            where: {id: Number(id)}
+        const creator = await this.getPrisma().creators.findFirst({
+            where: {id: id}
         });
 
-        if(!brand) return errorResponse(context, 'BRAND_NOT_FOUND');
+        if(!creator) return errorResponse(context, 'CREATOR_NOT_FOUND');
 
         const shortAccessToken = await InstagramConnector.accounts().getShortLivedAccessToken(code);
         if(!shortAccessToken.success) return errorResponse(context, shortAccessToken.error);
@@ -32,7 +31,7 @@ export class LinkInstagramEndpoint extends Endpoint {
         const longLivedAccessToken: APIResponse<{access_token: string, expires_in: string}> = await InstagramConnector.accounts().getLongLivedAccessToken(shortAccessToken.data);
         if(!longLivedAccessToken.success) return errorResponse(context, longLivedAccessToken.error);
 
-        const profileRequest: APIResponse = await InstagramConnector.accounts().getProfile(longLivedAccessToken.data.access_token, brand.id);
+        const profileRequest: APIResponse = await InstagramConnector.accounts().getProfile(longLivedAccessToken.data.access_token, creator.id);
         if(!profileRequest.success) return errorResponse(context, profileRequest.error);
 
         let expirationTimestamp = Date.now() + Number(longLivedAccessToken.data.expires_in) * 1000;
@@ -50,8 +49,8 @@ export class LinkInstagramEndpoint extends Endpoint {
 
         if(!instagramProfile) return errorResponse(context, 'COULD_NOT_LINK');
 
-        await this.getPrisma().brands.update({
-            where: {id: Number(brand.id)},
+        await this.getPrisma().creators.update({
+            where: {id: creator.id},
             data: {
                 instagram_id: instagramProfile.id
             }
