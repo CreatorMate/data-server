@@ -4,7 +4,7 @@ import {z, ZodObject} from "zod";
 import {Context} from "hono";
 import env from "../../../src/env";
 import {createAzure} from "@ai-sdk/azure";
-import {generateText, streamText, tool} from "ai";
+import {generateObject, generateText, streamText, tool} from "ai";
 import {successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 
 export class AskEndpoint extends Endpoint {
@@ -62,14 +62,52 @@ export class AskEndpoint extends Endpoint {
 
             return successResponse(context, {response: answer});
         } else if(result.toolResults.length == 1) {
-            const answer = await generateText({
-                model,
-                prompt: `"Answer the following user question using the provided object. The object contains the relevant data based on the user's request. if the user wants the profile or is asking for more data return the entire object we give you, never respond with an empty string, otherwise extract the necessary details and respond concisely in a natural, human-friendly manner without disclaimers unless the object is empty. If you cant find the specific field in the object just return the entire object
+            const { object } = await generateObject({
+                model: model,
+                schema: z.object({
+                    sections: z.array(
+                        z.object({
+                            type: z.string(),
+                            data: z.any() // data can be text or key-value object
+                        })
+                    )
+                }),
+                prompt: `Answer the following user question using the provided object.
 
-                User Question: ${question}
-                Object: ${JSON.stringify(result.toolResults[0])}`,
+    - If the response contains a set of data retrn the data as a key value object with the type object".
+    - If the response needs an **explanation**, return a **text** type 
+
+    Example:
+    {
+        "sections": [
+            { "type": "text", "data": "Here is the profile information for CreatorMate:" },
+            { 
+                "type": "object", 
+                "data": {
+                    "Username": "trycreatormate",
+                    "Biography": "Supporting creators who make art, not ‘content’",
+                    "Followers Count": "11,810",
+                    "Follows Count": "68",
+                    "Media Count": "32",
+                    "Website": "https://creatormate.com",
+                    "Profile Picture": "[Profile Picture URL]"
+                }
+            }
+        ]
+    }
+    Example:
+    {
+        "sections": [
+            { "type": "text", "data": "Creatormate has 124324 followers" },
+        ]
+    }
+
+    User Question: ${question}
+    Object: ${JSON.stringify(result.toolResults[0])}`
             });
-            return successResponse(context, {response: answer.text, using: result.toolResults[0].result});
+
+
+            return successResponse(context, object);
         } else if(result.text){
             return successResponse(context, {response: result.text});
         }
@@ -88,6 +126,9 @@ export class AskEndpoint extends Endpoint {
 
         if(!brand) return null;
 
-        return await this.getRedis().getFromCache(`brands.${brand.id}.profile`);
+        const object: any =await this.getRedis().getFromCache(`${brand.id}.profile`)
+        delete object.username;
+
+        return object;
     }
 }
