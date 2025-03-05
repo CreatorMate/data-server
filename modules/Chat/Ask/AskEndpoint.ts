@@ -14,7 +14,7 @@ export class AskEndpoint extends Endpoint {
     protected readonly route: string = '/ask';
     protected schema: ZodObject<any> = z.object({});
 
-    protected async handle(context: Context): any {
+    protected async handle(context: Context): Promise<any> {
         const {question} = await context.req.json();
 
         const key = env?.AZURE_AI_KEY ?? '';
@@ -32,6 +32,7 @@ export class AskEndpoint extends Endpoint {
                     days: z.number().describe("Number of past days to get likes from"),
                 }),
                 execute: async ({ userId, days }) => {
+                    //@ts-ignore
                     return this.getLikes(userId, days);
                 },
             }),

@@ -10,7 +10,7 @@ export class Accounts extends InstagramEndpoint {
     private metaClientId = env?.META_CLIENT_ID ?? '';
     private metaClientSecret = env?.META_CLIENT_SECRET ?? '';
 
-    public async getBrandProfile(access_token, brand_id) {
+    public async getBrandProfile(access_token: string, brand_id: number): Promise<APIResponse> {
         const response = await this.ask(`/me?fields=user_id,username,biography,followers_count,follows_count,media_count,profile_picture_url,website&access_token=${access_token}`);
 
         if(response.success) {

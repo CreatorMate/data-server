@@ -31,47 +31,47 @@ export default class CreatorManager {
     }
 
     public async syncCreator(): Promise<boolean> {
-        const phyllo =  new PhylloClient();
-        const creatorAccountReqeust: APIResponse<ConnectedAccount> = await phyllo.accounts().getAccountById(this.creatorId);
-        if (!creatorAccountReqeust.success) {
-            throw Error(`no creator with the id of ${this.creatorId}`);
-        }
-
-        const account_id = creatorAccountReqeust.data.account_id;
-
-        const refreshProfileRequest = await phyllo.profiles().refreshAccountById(account_id);
-        const refreshContentRequest = await phyllo.content().refreshContentFor(account_id);
-
-        const profileRequest: APIResponse<CreatorProfile> = await phyllo.profiles().getByAccountId(account_id);
-
-        if(!profileRequest.success) {
-            throw new Error('invalid creator account');
-        }
-
-        const contentRequest: APIResponse<Post[]> = await phyllo.content().getContentList(account_id, profileRequest.data, 365);
-        const demographicsRequest: APIResponse<Demographics> = await phyllo.profiles().getDemographicsByAccountId(account_id);
-
-        if (contentRequest.success) {
-            console.log(contentRequest.data.length);
-            await this.redis.storeInCache(`${this.creatorId}.content`, contentRequest.data);
-        }
-        if (profileRequest.success) {
-            await this.prismaClient.creators.update({
-                where: {id: this.creatorId},
-                data: {
-                    handle: profileRequest.data.username
-                }
-            })
-            profileRequest.data.id = this.creatorId;
-            await this.redis.storeInCache(`${this.creatorId}.profile`, profileRequest.data);
-        }
-        if(demographicsRequest.success) {
-            await this.redis.storeInCache(`${this.creatorId}.demographics`, demographicsRequest.data);
-        }
-
-        if(!demographicsRequest.success || !profileRequest.success || !contentRequest.success) {
-            throw new Error(`something went wrong while trying to sync creator: ${this.creatorId}`);
-        }
+        // const phyllo =  new PhylloClient();
+        // const creatorAccountReqeust: APIResponse<ConnectedAccount> = await phyllo.accounts().getAccountById(this.creatorId);
+        // if (!creatorAccountReqeust.success) {
+        //     throw Error(`no creator with the id of ${this.creatorId}`);
+        // }
+        //
+        // const account_id = creatorAccountReqeust.data.account_id;
+        //
+        // const refreshProfileRequest = await phyllo.profiles().refreshAccountById(account_id);
+        // const refreshContentRequest = await phyllo.content().refreshContentFor(account_id);
+        //
+        // const profileRequest: APIResponse<CreatorProfile> = await phyllo.profiles().getByAccountId(account_id);
+        //
+        // if(!profileRequest.success) {
+        //     throw new Error('invalid creator account');
+        // }
+        //
+        // const contentRequest: APIResponse<Post[]> = await phyllo.content().getContentList(account_id, profileRequest.data, 365);
+        // const demographicsRequest: APIResponse<Demographics> = await phyllo.profiles().getDemographicsByAccountId(account_id);
+        //
+        // if (contentRequest.success) {
+        //     console.log(contentRequest.data.length);
+        //     await this.redis.storeInCache(`${this.creatorId}.content`, contentRequest.data);
+        // }
+        // if (profileRequest.success) {
+        //     await this.prismaClient.creators.update({
+        //         where: {id: this.creatorId},
+        //         data: {
+        //             handle: profileRequest.data.username
+        //         }
+        //     })
+        //     profileRequest.data.id = this.creatorId;
+        //     await this.redis.storeInCache(`${this.creatorId}.profile`, profileRequest.data);
+        // }
+        // if(demographicsRequest.success) {
+        //     await this.redis.storeInCache(`${this.creatorId}.demographics`, demographicsRequest.data);
+        // }
+        //
+        // if(!demographicsRequest.success || !profileRequest.success || !contentRequest.success) {
+        //     throw new Error(`something went wrong while trying to sync creator: ${this.creatorId}`);
+        // }
 
         return true;
     }

@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import env from "../../env";
 
-const secretKeyHex = env.ENCRYPTION_KEY;
+const secretKeyHex = env?.ENCRYPTION_KEY;
 const secretKey = Buffer.from(secretKeyHex as string, 'hex');
 const iv = crypto.randomBytes(16);
 

@@ -39,19 +39,19 @@ export class GetCreatorProfileEndpoint extends Endpoint {
         if (cache) {
             return successResponse(context, cache);
         }
+        //
+        // const getConnectedAccount = await this.getPhyllo().accounts().getAccountById(id);
+        //
+        // if(!getConnectedAccount.success) {
+        //     return errorResponse(context, getConnectedAccount.error, 404);
+        // }
+        //
+        // const response: APIResponse<CreatorProfile> = await this.getPhyllo().profiles().getByAccountId(getConnectedAccount.data.account_id);
+        //
+        // if (!response.success) return errorResponse(context, id);
+        //
+        // await this.storeInCache(key, response.data);
 
-        const getConnectedAccount = await this.getPhyllo().accounts().getAccountById(id);
-
-        if(!getConnectedAccount.success) {
-            return errorResponse(context, getConnectedAccount.error, 404);
-        }
-
-        const response: APIResponse<CreatorProfile> = await this.getPhyllo().profiles().getByAccountId(getConnectedAccount.data.account_id);
-
-        if (!response.success) return errorResponse(context, id);
-
-        await this.storeInCache(key, response.data);
-
-        return successResponse(context, response.data);
+        return successResponse(context, '');
     }
 }

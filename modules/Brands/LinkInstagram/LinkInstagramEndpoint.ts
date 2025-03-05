@@ -32,7 +32,7 @@ export class LinkInstagramEndpoint extends Endpoint {
         const longLivedAccessToken: APIResponse<{access_token: string, expires_in: string}> = await InstagramConnector.accounts().getLongLivedAccessToken(shortAccessToken.data);
         if(!longLivedAccessToken.success) return errorResponse(context, longLivedAccessToken.error);
 
-        const profileRequest = await InstagramConnector.accounts().getBrandProfile(longLivedAccessToken.data.access_token, brand.id);
+        const profileRequest: APIResponse = await InstagramConnector.accounts().getBrandProfile(longLivedAccessToken.data.access_token, brand.id);
         if(!profileRequest.success) return errorResponse(context, profileRequest.error);
 
         console.log('converting')

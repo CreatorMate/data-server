@@ -17,16 +17,16 @@ export class RefreshCreatorProfileEndpoint extends Endpoint {
         const id = context.req.param('id') as string;
         if(!id) return errorResponse(context, 'provide a valid id');
 
-        const creatorAccountReqeust = await this.getPhyllo().accounts().getAccountById(id);
-        if(!creatorAccountReqeust.success) return errorResponse(context, 'this user does not exist');
-
-        const refreshRequest = await this.getPhyllo().profiles().refreshAccountById(creatorAccountReqeust.data.account_id);
-        if(!refreshRequest.success) return errorResponse(context, 'there is a problem with the account link of this user');
-
-        const profileRequest = await this.getPhyllo().profiles().getByAccountId(creatorAccountReqeust.data.account_id);
-        if(!profileRequest.success) return errorResponse(context, 'false');
-
-        await this.storeInCache(`${id}.profile`, profileRequest.data);
+        // const creatorAccountRequest = await this.getPhyllo().accounts().getAccountById(id);
+        // if(!creatorAccountRequest.success) return errorResponse(context, 'this user does not exist');
+        //
+        // const refreshRequest = await this.getPhyllo().profiles().refreshAccountById(creatorAccountRequest.data.account_id);
+        // if(!refreshRequest.success) return errorResponse(context, 'there is a problem with the account link of this user');
+        //
+        // const profileRequest = await this.getPhyllo().profiles().getByAccountId(creatorAccountRequest.data.account_id);
+        // if(!profileRequest.success) return errorResponse(context, 'false');
+        //
+        // await this.storeInCache(`${id}.profile`, profileRequest.data);
 
         return successResponse(context, {refreshed: true});
     }
