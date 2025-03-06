@@ -4,6 +4,9 @@ import {RedisClient, useRedis} from "../lib/redis";
 import {CreatorProfile} from "../utils/Phyllo/Types/CreatorProfile";
 import {Post} from "../utils/Phyllo/Types/Post";
 import {City, Country, gender_age_distribution} from "../utils/Phyllo/Types/Demographics";
+import {InstagramConnector} from "../utils/InstagramConnector/InstagramConnector";
+import {InstagramProfile} from "../utils/InstagramConnector/types/InstagramProfile";
+import {InstagramPost} from "../utils/InstagramConnector/types/InstagramPostTypes";
 
 export default class BrandManager {
     brandId: number;
@@ -17,20 +20,15 @@ export default class BrandManager {
         this.redis = useRedis();
     }
 
-    public async syncBrand() {
-        const brandContentMap: {[key: string]: Post[]} = {};
-        const brandCountries: {[key: string]: Country[]} = {};
-        const brandCities: {[key: string]: City[]} = {};
-        const brandAgeAndGender: {[key: string]: gender_age_distribution[]} = {};
-        const brandProfilesList: CreatorProfile[] = [];
-        const creators = await this.getActiveCreators();
+    public async syncBrand(idsStoSync: {id: string, instagramId: number}[]) {
+        const brandContentMap: {[key: string]: InstagramPost[]} = {};
+        const brandProfilesList: InstagramProfile[] = [];
 
-        for (const creator of creators) {
-            const creatorManager = new CreatorManager(creator.id, this.prismaClient);
-            const profile = await creatorManager.getCreatorProfile();
-            const content = await creatorManager.getCreatorPosts();
-            brandProfilesList.push(profile);
-            brandContentMap[creator.id] = content;
+        for (const id of idsStoSync) {
+            const profile = await InstagramConnector.accounts().getProfile(id.id);
+            const content = await InstagramConnector.content().getContentList(id.id);
+            if(profile.success) brandProfilesList.push(profile.data);
+            if(content.success) brandContentMap[id.id] = content.data;
         }
 
         await this.redis.storeInCache(`brands.${this.brandId}.content`, brandContentMap);

@@ -22,7 +22,7 @@ export class SyncInstagramEndpoint extends Endpoint {
             const creator = await this.getPrisma().creators.findUnique({
                 where: {id: creatorId}
             });
-            if(!creator) return;
+            if(!creator || !creator.instagram_id) return;
             this.syncCreator(creator).catch(err => console.error('Background task error:', err));
         } else if(brandId) {
             this.syncBrand(Number(brandId)).catch(err => console.error('Background task error:', err));
@@ -52,31 +52,29 @@ export class SyncInstagramEndpoint extends Endpoint {
             idsStoSync.push({id: creator.id, instagramId: creator.instagram_id});
         }
 
-        const syncPromises = idsStoSync.map(({id, instagramId}) => {
-            const instagramManager = new InstagramManager(id, instagramId);
-            return instagramManager.syncInstagram();
-        });
+         for (const item of idsStoSync) {
+            const instagramManager = new InstagramManager(item.id, item.instagramId);
+            await instagramManager.syncInstagram();
+        }
 
         const brandManager = new BrandManager(id, this.getPrisma());
-        await brandManager.syncBrand();
+        await brandManager.syncBrand(idsStoSync);
     }
 
     private async syncCreator(creator: any) {
         try {
-            const creatorManager = new CreatorManager(creator.id, this.getPrisma());
-            const creatorData = await creatorManager.syncCreator();
-
-            const brandPartnerships = await this.getBrandPartnerships(creator.id);
-            for(const brand of brandPartnerships) {
-                const brandManager = new BrandManager(brand.id, this.getPrisma());
-                const profile = await creatorManager.getCreatorProfile();
-                const content = await creatorManager.getCreatorPosts();
-                const demographics = await creatorManager.getCreatorDemographics();
-
-                await brandManager.addPostsToBrand(creator.id, content);
-                await brandManager.addProfilesToBrand(creator.id, profile);
-                await brandManager.addDemographicsToBrand(creator.id, demographics)
-            }
+            // const instagramManager = new InstagramManager(creator.id, creator.instagram_id);
+            // await instagramManager.syncInstagram();
+            //
+            // const brandPartnerships = await this.getBrandPartnerships(creator.id);
+            // for(const brand of brandPartnerships) {
+            //     const brandManager = new BrandManager(brand.id, this.getPrisma());
+            //     const profile = await creatorManager.getCreatorProfile();
+            //     const content = await creatorManager.getCreatorPosts();
+            //
+            //     await brandManager.addPostsToBrand(creator.id, content);
+            //     await brandManager.addProfilesToBrand(creator.id, profile);
+            // }
         } catch (e) {
             console.error(`there was a problem while syncing creator ${creator.email} ${e}`);
         }

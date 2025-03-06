@@ -25,7 +25,6 @@ export class Accounts extends InstagramEndpoint {
 
         const response: APIResponse<InstagramProfile> = await this.ask(`/me?fields=user_id,username,biography,followers_count,follows_count,media_count,profile_picture_url,website&access_token=${access_token}`);
         if(response.success) {
-            console.log(response.data)
             const profile = toInstagramProfile(response.data)
             response.data = profile;
             await redis.storeInCache(`${id}.profile`, profile);

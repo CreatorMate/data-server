@@ -9,7 +9,6 @@ import {InstagramPost} from "../types/InstagramPostTypes";
 
 export class Content extends InstagramEndpoint {
     public async getContentList(id: string, profile: InstagramProfile|null = null, days = 365, access_token: string = '', refresh: boolean = false): Promise<APIResponse> {
-        console.log(profile)
         const redis = useRedis();
         if(!refresh) {
             return {success: true, data: await redis.getFromCache(`${id}.content`), meta: null,}
@@ -61,7 +60,6 @@ export class Content extends InstagramEndpoint {
 
         const request: APIResponse = await this.ask(`/${media.id}/insights?metric=${metrics.get(media.media_product_type)}&access_token=${accessToken}`);
         if(!request.success) {
-            console.log(request);
             return null;
         }
         for(const metric of request.data.data) {
