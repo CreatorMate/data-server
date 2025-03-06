@@ -6,6 +6,8 @@ import {successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 import CreatorManager from "../../../src/managers/CreatorManager";
 import BrandManager from "../../../src/managers/BrandManager";
 import {Creator} from "../../../src/lib/supabase-types";
+import {InstagramManager} from "../../../src/utils/InstagramConnector/InstagramManager";
+import {processInBatches} from "../../../src/utils/uutils";
 
 export class SyncInstagramEndpoint extends Endpoint {
     protected readonly description: string = 'sync all the creators data to the cloud'
@@ -33,12 +35,27 @@ export class SyncInstagramEndpoint extends Endpoint {
             'started': true
         });
     }
-
     private async syncBrand(id: number) {
+        const idsStoSync: {id: string, instagramId: number}[] = [];
+
+        const brand = await this.getPrisma().brands.findUnique({
+            where: {id: id},
+        });
+
+        if(!brand || !brand.instagram_id) return;
+
+        idsStoSync.push({id: brand.id.toString(), instagramId: brand.instagram_id});
+
         const creators = await this.getActiveCreators(id);
         for(const creator of creators) {
-            await this.syncCreator(creator);
+            if(!creator.instagram_id) continue;
+            idsStoSync.push({id: creator.id, instagramId: creator.instagram_id});
         }
+
+        const syncPromises = idsStoSync.map(({id, instagramId}) => {
+            const instagramManager = new InstagramManager(id, instagramId);
+            return instagramManager.syncInstagram();
+        });
 
         const brandManager = new BrandManager(id, this.getPrisma());
         await brandManager.syncBrand();
@@ -49,7 +66,6 @@ export class SyncInstagramEndpoint extends Endpoint {
             const creatorManager = new CreatorManager(creator.id, this.getPrisma());
             const creatorData = await creatorManager.syncCreator();
 
-            //@todo add creators data to the right brands
             const brandPartnerships = await this.getBrandPartnerships(creator.id);
             for(const brand of brandPartnerships) {
                 const brandManager = new BrandManager(brand.id, this.getPrisma());
@@ -109,5 +125,14 @@ export class SyncInstagramEndpoint extends Endpoint {
                 creator_brand: true, // Optional: include relationship data
             },
         });
+    }
+
+    private async syncInstagramBatch(idsToSync: { id: string; instagramId: number }[], batchSize: number) {
+        await processInBatches(idsToSync, batchSize, async ({ id, instagramId }) => {
+            const instagramManager = new InstagramManager(id, instagramId);
+            return instagramManager.syncInstagram();
+        });
+
+        console.log("All Instagram accounts synced!");
     }
 }

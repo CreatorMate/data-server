@@ -29,19 +29,12 @@ export default class BrandManager {
             const creatorManager = new CreatorManager(creator.id, this.prismaClient);
             const profile = await creatorManager.getCreatorProfile();
             const content = await creatorManager.getCreatorPosts();
-            const demographics = await creatorManager.getCreatorDemographics();
             brandProfilesList.push(profile);
             brandContentMap[creator.id] = content;
-            brandCountries[creator.id] = demographics.countries;
-            brandCities[creator.id] = demographics.cities;
-            brandAgeAndGender[creator.id] = demographics.gender_age_distribution;
         }
 
         await this.redis.storeInCache(`brands.${this.brandId}.content`, brandContentMap);
         await this.redis.storeInCache(`brands.${this.brandId}.profiles`, brandProfilesList);
-        await this.redis.storeInCache(`brands.${this.brandId}.countries`, brandCountries);
-        await this.redis.storeInCache(`brands.${this.brandId}.cities`, brandCities);
-        await this.redis.storeInCache(`brands.${this.brandId}.gender_age_distribution`, brandAgeAndGender);
 
         this.prepareAnalytics().catch(err => console.error('Background task error:', err));
     }

@@ -24,10 +24,8 @@ model brands {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model creators {
   id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_at         DateTime            @default(now()) @db.Timestamptz(6)
   status             account_status      @default(NEW)
   handle             String?             @db.VarChar
-  email              String              @unique @db.VarChar
   based_in           String?             @db.VarChar
   project_types      String[]
   date_of_birth      String?             @db.VarChar
@@ -35,22 +33,22 @@ model creators {
   tiktok             String?             @db.VarChar
   linked             Boolean             @default(false)
   instagram_id       Int?
-  user_id            String              @db.Uuid
+  user_id            String              @unique @db.Uuid
   creator_brand      creator_brand[]
-  instagram_accounts instagram_accounts? @relation(fields: [instagram_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  instagram_accounts instagram_accounts? @relation(fields: [instagram_id], references: [id], onUpdate: NoAction)
   users              users               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model users {
-  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  external_id String     @db.VarChar
-  email       String     @db.VarChar
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  external_id String    @db.VarChar
+  email       String    @db.VarChar
   brand_id    Int?
-  full_name   String?    @db.VarChar
-  picture     String?    @db.VarChar
-  creators    creators[]
-  brands      brands?    @relation(fields: [brand_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  full_name   String?   @db.VarChar
+  picture     String?   @db.VarChar
+  creators    creators?
+  brands      brands?   @relation(fields: [brand_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([email], map: "idx_users_email")
   @@index([external_id], map: "idx_users_external_id")

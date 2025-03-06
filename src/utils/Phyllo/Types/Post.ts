@@ -28,6 +28,7 @@ export type Post = {
     posted_by: string,
     reach_rate: number,
     active_engagement: number,
+
 }
 
 export function toPost(data: any, profile: CreatorProfile): Post {
