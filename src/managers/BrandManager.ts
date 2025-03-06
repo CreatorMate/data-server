@@ -174,17 +174,17 @@ export default class BrandManager {
     public async getPosts(ids: string, amountOfDays: unknown = "") {
         let days = 90;
         if(amountOfDays) days = amountOfDays as number;
-        const brandPosts: Record<string, Post[]> = await this.redis.getFromCache(`brands.${this.brandId}.content`);
+        const brandPosts: Record<string, InstagramPost[]> = await this.redis.getFromCache(`brands.${this.brandId}.content`);
         for (const key in brandPosts) {
             if (!Array.isArray(brandPosts[key])) {
                 brandPosts[key] = [];
             }
         }
-        let creatorContent: Map<string, Post[]> = new Map(Object.entries(brandPosts));
-        const {items: filteredPosts, size} = this.filterCreatorsFromMap<Post>(creatorContent, ids);
-        const dateFilter = this.filterDaysFromList<Post>('published_at', filteredPosts, days);
+        let creatorContent: Map<string, InstagramPost[]> = new Map(Object.entries(brandPosts));
+        const {items: filteredPosts, size} = this.filterCreatorsFromMap<InstagramPost>(creatorContent, ids);
+        // const dateFilter = this.filterDaysFromList<InstagramPost>('published_at', filteredPosts, days);
 
-        return dateFilter;
+        return filteredPosts;
     }
 
     public async getFollowers(ids: string): Promise<number> {
