@@ -5,6 +5,7 @@ import {Context} from "hono";
 import {Post} from "../../../src/utils/Phyllo/Types/Post";
 import {APIResponse, errorResponse, successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 import BrandManager from "../../../src/managers/BrandManager";
+import {InstagramPost} from "../../../src/utils/InstagramConnector/types/InstagramPostTypes";
 
 export class GetSortedContentEndpoint extends Endpoint {
     protected readonly description: string = 'get a list of sorted content items, sorted by property';
@@ -27,7 +28,7 @@ export class GetSortedContentEndpoint extends Endpoint {
         const postsList= await brandManager.getPosts(ids, days);
         console.log(postsList.length)
 
-        const sortedPosts = this.sortPosts<Post>(postsList, key as keyof Post, order as  "asc" | "desc");
+        const sortedPosts = this.sortPosts<InstagramPost>(postsList, key as keyof InstagramPost, order as  "asc" | "desc");
         console.log(sortedPosts.length)
 
         const amount = limit ? Number(limit) : 10;
@@ -39,7 +40,7 @@ export class GetSortedContentEndpoint extends Endpoint {
         return successResponse(context, posts);
     }
 
-    private sortPosts<T extends Post>(posts: T[], key: keyof T, order: "asc" | "desc" = 'desc'): T[] {
+    private sortPosts<T extends InstagramPost>(posts: T[], key: keyof T, order: "asc" | "desc" = 'desc'): T[] {
         return posts.sort((postA: T, postB: T) => {
             if(order === 'desc') {
                 return postA[key] < postB[key] ? 1 : -1

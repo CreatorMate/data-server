@@ -2,9 +2,12 @@ import {Endpoint} from "../../../src/utils/Endpoint";
 import {Groups} from "../../../src/lib/enums";
 import {z, ZodObject} from "zod";
 import {Context} from "hono";
-import {errorResponse, successResponse} from "../../../src/utils/APIResponse/HttpResponse";
+import {APIResponse, errorResponse, successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 import BrandManager from "../../../src/managers/BrandManager";
 import {Post} from "../../../src/utils/Phyllo/Types/Post";
+import {InstagramManager} from "../../../src/utils/InstagramConnector/InstagramManager";
+import {InstagramConnector} from "../../../src/utils/InstagramConnector/InstagramConnector";
+import {InstagramPost} from "../../../src/utils/InstagramConnector/types/InstagramPostTypes";
 
 export class GetBrandAverageEndpoint extends Endpoint{
     protected readonly description: string = "Get the average of post fields";
@@ -14,15 +17,17 @@ export class GetBrandAverageEndpoint extends Endpoint{
     protected schema: ZodObject<any> = z.object({});
 
     protected async handle(context: Context) {
-        const id = context.req.param('id') as unknown
+        const id = context.req.param('id') as string;
         const {key, ids, days} = context.req.query();
         if(!key) {
             return errorResponse(context, 'must be given a key');
         }
 
-        const brandManager = new BrandManager(<number>id, this.getPrisma());
-        const posts: Post[] = await brandManager.getPosts(ids, days);
-        const average = brandManager.getAverageField<Post>(posts, key as keyof Post);
+        const brandManager = new BrandManager(Number(id),this.getPrisma());
+        // const posts: APIResponse<InstagramPost[]> = await InstagramConnector.content().getContentList(id);
+        // if(!posts.success) return errorResponse(context, 'unable to get posts at this time');
+        const posts: InstagramPost[] = await brandManager.getPosts(ids, days);
+        const average = brandManager.getAverageField<InstagramPost>(posts, key as keyof InstagramPost);
 
         return successResponse(context, {
             average: average

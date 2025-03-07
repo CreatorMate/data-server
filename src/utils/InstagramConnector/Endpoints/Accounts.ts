@@ -3,6 +3,9 @@ import {usePrisma} from "../../../lib/prisma";
 import {InstagramEndpoint} from "../InstagramEndpoint";
 import env from "../../../env";
 import {useRedis} from "../../../lib/redis";
+import {undefined} from "zod";
+import {toCreatorProfile} from "../../Phyllo/Types/CreatorProfile";
+import {InstagramProfile, toInstagramProfile} from "../types/InstagramProfile";
 
 export class Accounts extends InstagramEndpoint {
 
@@ -10,12 +13,21 @@ export class Accounts extends InstagramEndpoint {
     private metaClientId = env?.META_CLIENT_ID ?? '';
     private metaClientSecret = env?.META_CLIENT_SECRET ?? '';
 
-    public async getProfile(access_token: string, id: number|string): Promise<APIResponse> {
-        const response = await this.ask(`/me?fields=user_id,username,biography,followers_count,follows_count,media_count,profile_picture_url,website&access_token=${access_token}`);
+    public async getProfile(id: number|string, access_token: string = '', refresh: boolean = false): Promise<APIResponse<InstagramProfile>> {
+        const redis = useRedis();
+        if(!refresh) {
+            return {
+                success: true,
+                data: await redis.getFromCache(`${id}.profile`),
+                meta: null,
+            }
+        }
 
+        const response: APIResponse<InstagramProfile> = await this.ask(`/me?fields=user_id,username,biography,followers_count,follows_count,media_count,profile_picture_url,website&access_token=${access_token}`);
         if(response.success) {
-            const redis = useRedis();
-            await redis.storeInCache(`${id}.profile`, response.data);
+            const profile = toInstagramProfile(response.data)
+            response.data = profile;
+            await redis.storeInCache(`${id}.profile`, profile);
         }
 
         return response;

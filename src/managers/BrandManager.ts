@@ -4,6 +4,9 @@ import {RedisClient, useRedis} from "../lib/redis";
 import {CreatorProfile} from "../utils/Phyllo/Types/CreatorProfile";
 import {Post} from "../utils/Phyllo/Types/Post";
 import {City, Country, gender_age_distribution} from "../utils/Phyllo/Types/Demographics";
+import {InstagramConnector} from "../utils/InstagramConnector/InstagramConnector";
+import {InstagramProfile} from "../utils/InstagramConnector/types/InstagramProfile";
+import {InstagramPost} from "../utils/InstagramConnector/types/InstagramPostTypes";
 
 export default class BrandManager {
     brandId: number;
@@ -17,31 +20,19 @@ export default class BrandManager {
         this.redis = useRedis();
     }
 
-    public async syncBrand() {
-        const brandContentMap: {[key: string]: Post[]} = {};
-        const brandCountries: {[key: string]: Country[]} = {};
-        const brandCities: {[key: string]: City[]} = {};
-        const brandAgeAndGender: {[key: string]: gender_age_distribution[]} = {};
-        const brandProfilesList: CreatorProfile[] = [];
-        const creators = await this.getActiveCreators();
+    public async syncBrand(idsStoSync: {id: string, instagramId: number}[]) {
+        const brandContentMap: {[key: string]: InstagramPost[]} = {};
+        const brandProfilesList: InstagramProfile[] = [];
 
-        for (const creator of creators) {
-            const creatorManager = new CreatorManager(creator.id, this.prismaClient);
-            const profile = await creatorManager.getCreatorProfile();
-            const content = await creatorManager.getCreatorPosts();
-            const demographics = await creatorManager.getCreatorDemographics();
-            brandProfilesList.push(profile);
-            brandContentMap[creator.id] = content;
-            brandCountries[creator.id] = demographics.countries;
-            brandCities[creator.id] = demographics.cities;
-            brandAgeAndGender[creator.id] = demographics.gender_age_distribution;
+        for (const id of idsStoSync) {
+            const profile = await InstagramConnector.accounts().getProfile(id.id);
+            const content = await InstagramConnector.content().getContentList(id.id);
+            if(profile.success) brandProfilesList.push(profile.data);
+            if(content.success) brandContentMap[id.id] = content.data;
         }
 
         await this.redis.storeInCache(`brands.${this.brandId}.content`, brandContentMap);
         await this.redis.storeInCache(`brands.${this.brandId}.profiles`, brandProfilesList);
-        await this.redis.storeInCache(`brands.${this.brandId}.countries`, brandCountries);
-        await this.redis.storeInCache(`brands.${this.brandId}.cities`, brandCities);
-        await this.redis.storeInCache(`brands.${this.brandId}.gender_age_distribution`, brandAgeAndGender);
 
         this.prepareAnalytics().catch(err => console.error('Background task error:', err));
     }
@@ -183,17 +174,17 @@ export default class BrandManager {
     public async getPosts(ids: string, amountOfDays: unknown = "") {
         let days = 90;
         if(amountOfDays) days = amountOfDays as number;
-        const brandPosts: Record<string, Post[]> = await this.redis.getFromCache(`brands.${this.brandId}.content`);
+        const brandPosts: Record<string, InstagramPost[]> = await this.redis.getFromCache(`brands.${this.brandId}.content`);
         for (const key in brandPosts) {
             if (!Array.isArray(brandPosts[key])) {
                 brandPosts[key] = [];
             }
         }
-        let creatorContent: Map<string, Post[]> = new Map(Object.entries(brandPosts));
-        const {items: filteredPosts, size} = this.filterCreatorsFromMap<Post>(creatorContent, ids);
-        const dateFilter = this.filterDaysFromList<Post>('published_at', filteredPosts, days);
+        let creatorContent: Map<string, InstagramPost[]> = new Map(Object.entries(brandPosts));
+        const {items: filteredPosts, size} = this.filterCreatorsFromMap<InstagramPost>(creatorContent, ids);
+        const dateFilter = this.filterDaysFromList<InstagramPost>('timestamp', filteredPosts, days);
 
-        return dateFilter;
+        return filteredPosts;
     }
 
     public async getFollowers(ids: string): Promise<number> {

@@ -6,6 +6,9 @@ import {successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 import CreatorManager from "../../../src/managers/CreatorManager";
 import BrandManager from "../../../src/managers/BrandManager";
 import {Creator} from "../../../src/lib/supabase-types";
+import {InstagramManager} from "../../../src/utils/InstagramConnector/InstagramManager";
+import {processInBatches} from "../../../src/utils/uutils";
+import {InstagramConnector} from "../../../src/utils/InstagramConnector/InstagramConnector";
 
 export class SyncInstagramEndpoint extends Endpoint {
     protected readonly description: string = 'sync all the creators data to the cloud'
@@ -16,13 +19,13 @@ export class SyncInstagramEndpoint extends Endpoint {
 
     protected async handle(context: Context) {
         const {brandId, creatorId} = context.req.query();
-        if(creatorId) {
+        if (creatorId) {
             const creator = await this.getPrisma().creators.findUnique({
                 where: {id: creatorId}
             });
-            if(!creator) return;
+            if (!creator || !creator.instagram_id) return;
             this.syncCreator(creator).catch(err => console.error('Background task error:', err));
-        } else if(brandId) {
+        } else if (brandId) {
             this.syncBrand(Number(brandId)).catch(err => console.error('Background task error:', err));
         } else {
             this.syncAll().catch(err => console.error('Background task error:', err));
@@ -35,31 +38,43 @@ export class SyncInstagramEndpoint extends Endpoint {
     }
 
     private async syncBrand(id: number) {
+        const idsStoSync: { id: string, instagramId: number }[] = [];
+
+        const brand = await this.getPrisma().brands.findUnique({
+            where: {id: id},
+        });
+
+        if (!brand || !brand.instagram_id) return;
+
+        idsStoSync.push({id: brand.id.toString(), instagramId: brand.instagram_id});
+
         const creators = await this.getActiveCreators(id);
-        for(const creator of creators) {
-            await this.syncCreator(creator);
+        for (const creator of creators) {
+            if (!creator.instagram_id) continue;
+            idsStoSync.push({id: creator.id, instagramId: creator.instagram_id});
+        }
+
+        for (const item of idsStoSync) {
+            const instagramManager = new InstagramManager(item.id, item.instagramId);
+            await instagramManager.syncInstagram();
         }
 
         const brandManager = new BrandManager(id, this.getPrisma());
-        await brandManager.syncBrand();
+        await brandManager.syncBrand(idsStoSync);
     }
 
     private async syncCreator(creator: any) {
         try {
-            const creatorManager = new CreatorManager(creator.id, this.getPrisma());
-            const creatorData = await creatorManager.syncCreator();
+            const instagramManager = new InstagramManager(creator.id, creator.instagram_id);
+            await instagramManager.syncInstagram();
+            const profile = await InstagramConnector.accounts().getProfile(creator.id);
+            const content = await InstagramConnector.content().getContentList(creator.id);
 
-            //@todo add creators data to the right brands
             const brandPartnerships = await this.getBrandPartnerships(creator.id);
             for(const brand of brandPartnerships) {
                 const brandManager = new BrandManager(brand.id, this.getPrisma());
-                const profile = await creatorManager.getCreatorProfile();
-                const content = await creatorManager.getCreatorPosts();
-                const demographics = await creatorManager.getCreatorDemographics();
-
                 await brandManager.addPostsToBrand(creator.id, content);
                 await brandManager.addProfilesToBrand(creator.id, profile);
-                await brandManager.addDemographicsToBrand(creator.id, demographics)
             }
         } catch (e) {
             console.error(`there was a problem while syncing creator ${creator.email} ${e}`);
@@ -67,15 +82,52 @@ export class SyncInstagramEndpoint extends Endpoint {
     }
 
     private async syncAll() {
-        const creators = await this.getPrisma().creators.findMany();
-        for (const creator of creators) {
-           await this.syncCreator(creator);
+        const idsToSync: { id: string, instagramId: number }[] = [];
+        const creators = await this.getPrisma().creators.findMany({
+            where: {
+                instagram_id: {
+                    not: null
+                }
+            }
+        });
+        const brands = await this.getPrisma().brands.findMany({
+            where: {
+                instagram_id: {
+                    not: null
+                }
+            }
+        });
+        idsToSync.push(
+            ...brands
+                .map(brand => ({
+                    id: brand.id.toString(),
+                    instagramId: brand.instagram_id as number
+                }))
+        );
+        idsToSync.push(
+            ...creators
+                .map(creator => ({
+                    id: creator.id,
+                    instagramId: creator.instagram_id as number
+                }))
+        );
+
+        for (const idToSync of idsToSync) {
+            const instagramManager = new InstagramManager(idToSync.id, idToSync.instagramId);
+            await instagramManager.syncInstagram();
         }
 
-        const brands = await this.getPrisma().brands.findMany();
-        for (const brand of brands) {
+        for(const brand of brands) {
+            const brandIdsToSync: { id: string, instagramId: number }[] = [];
+            brandIdsToSync.push({id: brand.id.toString(), instagramId: brand.instagram_id as number});
+            const brandCreators = await this.getActiveCreators(brand.id);
+            for (const creator of brandCreators) {
+                if (!creator.instagram_id) continue;
+                brandIdsToSync.push({id: creator.id, instagramId: creator.instagram_id});
+            }
+
             const brandManager = new BrandManager(brand.id, this.getPrisma());
-            await brandManager.syncBrand();
+            await brandManager.syncBrand(brandIdsToSync);
         }
     }
 
@@ -109,5 +161,14 @@ export class SyncInstagramEndpoint extends Endpoint {
                 creator_brand: true, // Optional: include relationship data
             },
         });
+    }
+
+    private async syncInstagramBatch(idsToSync: { id: string; instagramId: number }[], batchSize: number) {
+        await processInBatches(idsToSync, batchSize, async ({id, instagramId}) => {
+            const instagramManager = new InstagramManager(id, instagramId);
+            return instagramManager.syncInstagram();
+        });
+
+        console.log("All Instagram accounts synced!");
     }
 }

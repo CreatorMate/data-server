@@ -31,7 +31,7 @@ export class LinkCreatorInstagramEndpoint extends Endpoint {
         const longLivedAccessToken: APIResponse<{access_token: string, expires_in: string}> = await InstagramConnector.accounts().getLongLivedAccessToken(shortAccessToken.data);
         if(!longLivedAccessToken.success) return errorResponse(context, longLivedAccessToken.error);
 
-        const profileRequest: APIResponse = await InstagramConnector.accounts().getProfile(longLivedAccessToken.data.access_token, creator.id);
+        const profileRequest: APIResponse = await InstagramConnector.accounts().getProfile(creator.id, longLivedAccessToken.data.access_token, true);
         if(!profileRequest.success) return errorResponse(context, profileRequest.error);
 
         let expirationTimestamp = Date.now() + Number(longLivedAccessToken.data.expires_in) * 1000;

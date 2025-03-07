@@ -28,6 +28,7 @@ export type Post = {
     posted_by: string,
     reach_rate: number,
     active_engagement: number,
+
 }
 
 export function toPost(data: any, profile: CreatorProfile): Post {
@@ -73,7 +74,6 @@ export function toPost(data: any, profile: CreatorProfile): Post {
     post.reach_rate = parseFloat((reachRate).toFixed(2));
 
     post.posted_by = profile.username;
-    post.user_picture = profile.picture;
 
     return post;
 }

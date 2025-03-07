@@ -33,7 +33,7 @@ export class SyncBrandsEndpoint extends Endpoint {
         const syncedCreators = new Map<string, boolean>();
         for (const brand of brands) {
             const brandManager = new BrandManager(brand.id, this.getPrisma());
-            await brandManager.syncBrand();
+            // await brandManager.syncBrand();
         }
     }
 }
