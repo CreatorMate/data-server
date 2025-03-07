@@ -19,7 +19,6 @@ export class GetSortedContentEndpoint extends Endpoint {
         let {key, order, ids, page, limit, days} = context.req.query();
 
         if(!brand_id) return errorResponse(context, 'provide a valid key');
-
         if(order && (order !== 'asc' && order !== 'desc')) {
             return errorResponse(context, 'order must be either asc or desc')
         }
