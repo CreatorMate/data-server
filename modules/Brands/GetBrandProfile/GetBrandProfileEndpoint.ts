@@ -37,7 +37,7 @@ export class GetBrandProfileEndpoint extends Endpoint {
 
         const accessToken = decrypt(brand.instagram_accounts.token);
 
-        const brandProfile = await InstagramConnector.accounts().getProfile(accessToken, brand.id);
+        const brandProfile = await InstagramConnector.accounts().getProfile(brand.id, accessToken);
         if(!brandProfile.success) return errorResponse(context, brandProfile.error);
 
         return successResponse(context, brandProfile.data);

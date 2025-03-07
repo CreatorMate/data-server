@@ -25,4 +25,5 @@ export type InstagramPost = {
     active_engagement: number,
     user_picture: string,
     posted_by: string,
+    id: number
 }

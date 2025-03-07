@@ -52,7 +52,7 @@ export class Content extends InstagramEndpoint {
         return post;
     }
 
-    private async getMediaInsights(media: InstagramPost, accessToken) {
+    private async getMediaInsights(media: InstagramPost, accessToken: string) {
         const metrics = new Map<string, string>();
         metrics.set('FEED', 'comments,follows,likes,profile_activity,profile_visits,reach,saved,shares,total_interactions');
         metrics.set('REELS', 'comments,ig_reels_avg_watch_time,ig_reels_video_view_total_time,likes,reach,saved,shares,total_interactions');
@@ -63,6 +63,7 @@ export class Content extends InstagramEndpoint {
             return null;
         }
         for(const metric of request.data.data) {
+            //@ts-ignore
             media[metric.name] = metric.values[0].value;
         }
         return media;

@@ -182,7 +182,7 @@ export default class BrandManager {
         }
         let creatorContent: Map<string, InstagramPost[]> = new Map(Object.entries(brandPosts));
         const {items: filteredPosts, size} = this.filterCreatorsFromMap<InstagramPost>(creatorContent, ids);
-        // const dateFilter = this.filterDaysFromList<InstagramPost>('published_at', filteredPosts, days);
+        const dateFilter = this.filterDaysFromList<InstagramPost>('timestamp', filteredPosts, days);
 
         return filteredPosts;
     }

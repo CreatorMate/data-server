@@ -13,7 +13,6 @@ export function toCreatorProfile(data: any, id: string): CreatorProfile {
     return {
         username: data.username,
         bio: data.bio,
-        picture: data.image_url,
         followers: data.reputation.follower_count,
         following: data.reputation.following_count,
         website: data.website,

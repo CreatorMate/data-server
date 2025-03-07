@@ -5,6 +5,7 @@ import {Context} from "hono";
 import {Post} from "../../../src/utils/Phyllo/Types/Post";
 import {APIResponse, errorResponse, successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 import BrandManager from "../../../src/managers/BrandManager";
+import {InstagramPost} from "../../../src/utils/InstagramConnector/types/InstagramPostTypes";
 
 export class GetContentTypesEndpoint extends Endpoint {
     protected readonly description: string = 'get percentages of the content types for your brand';
@@ -18,12 +19,12 @@ export class GetContentTypesEndpoint extends Endpoint {
         let {ids, days} = context.req.query();
 
         const brandManager = new BrandManager(<number>brand_id, this.getPrisma());
-        const posts: Post[] = await brandManager.getPosts(ids, days);
+        const posts: InstagramPost[] = await brandManager.getPosts(ids, days);
 
         const types: Map<string, number> = new Map();
 
         for(const post of posts) {
-            let type = post.type == 'FEED' ? 'IMAGE' : post.type;
+            let type = post.media_product_type == 'FEED' ? 'IMAGE' : post.media_product_type;
             if(!types.has(type)) {
                 types.set(type, 0);
             }

@@ -27,12 +27,13 @@ export class InstagramManager {
             where: {id: this.instagramId}
         });
 
-        if(!instagramAccount) return;
+        if(!instagramAccount) return false;
 
         const accessToken = decrypt(instagramAccount.token);
 
         const profile: APIResponse<InstagramProfile> = await InstagramConnector.accounts().getProfile(this.id, accessToken, true);
-        if(!profile.success) return;
+        if(!profile.success) return false;
         const contentRequest: APIResponse<Post[]> = await InstagramConnector.content().getContentList(this.id, profile.data, 365, accessToken, true);
+        return true;
     }
 }
