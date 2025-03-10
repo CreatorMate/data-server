@@ -11,9 +11,10 @@ datasource db {
 model brands {
   id                 Int                 @id @default(autoincrement())
   name               String              @db.VarChar
-  is_premium         String?             @db.VarChar
+  is_premium         Boolean?
   customer_id        String?             @db.VarChar
   instagram_id       Int?
+  picture            String?
   instagram_accounts instagram_accounts? @relation(fields: [instagram_id], references: [id], onUpdate: NoAction)
   creator_brand      creator_brand[]
   projects           projects[]
@@ -34,6 +35,9 @@ model creators {
   linked             Boolean             @default(false)
   instagram_id       Int?
   user_id            String              @unique @db.Uuid
+  first_name         String?             @db.VarChar
+  last_name          String?
+  work_types         String[]
   creator_brand      creator_brand[]
   instagram_accounts instagram_accounts? @relation(fields: [instagram_id], references: [id], onUpdate: NoAction)
   users              users               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
