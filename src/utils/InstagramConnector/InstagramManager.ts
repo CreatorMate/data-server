@@ -34,7 +34,7 @@ export class InstagramManager {
         let accessToken = decrypt(instagramAccount.token);
         console.log(`${instagramAccount.id} - ${accessToken}`)
 
-        if(isExpirationWithinDays(instagramAccount.expires_at.toString(), 50)) {
+        if(isExpirationWithinDays(instagramAccount.expires_at.toISOString(), 50)) {
             const refresh = await this.refreshAccessToken(instagramAccount.id ,accessToken);
 
             if(!refresh.success) return false;
