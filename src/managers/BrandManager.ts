@@ -24,15 +24,64 @@ export default class BrandManager {
         const brandContentMap: {[key: string]: InstagramPost[]} = {};
         const brandProfilesList: InstagramProfile[] = [];
 
+        const brandFollowerCities: {[key: string]: any[]} = {};
+        const brandFollowerGenders: {[key: string]: any[]} = {};
+        const brandFollowerAges: {[key: string]: any[]} = {};
+        const brandFollowerCountries: {[key: string]: any[]} = {};
+
+        const brandAudienceCities: {[key: string]: any[]} = {};
+        const brandAudienceGenders: {[key: string]: any[]} = {};
+        const brandAudienceAges: {[key: string]: any[]} = {};
+        const brandAudienceCountries: {[key: string]: any[]} = {};
+
+        const brandUserInsights: {[key: string]: any[]} = {};
+
         for (const id of idsStoSync) {
             const profile = await InstagramConnector.accounts().getProfile(id.id);
             const content = await InstagramConnector.content().getContentList(id.id);
+
+            const followerCities = await InstagramConnector.engagement().getFollowerCities(id.id);
+            const followerGenders = await InstagramConnector.engagement().getFollowerGenders(id.id);
+            const followerAges = await InstagramConnector.engagement().getFollowerAge(id.id);
+            const followerCountries = await InstagramConnector.engagement().getFollowerCountries(id.id);
+
+            const audienceCities = await InstagramConnector.engagement().getFollowerCities(id.id);
+            const audienceGenders = await InstagramConnector.engagement().getFollowerGenders(id.id);
+            const audienceAges = await InstagramConnector.engagement().getFollowerAge(id.id);
+            const audienceCountries = await InstagramConnector.engagement().getFollowerCountries(id.id);
+
+            const userInsights = await InstagramConnector.engagement().getUserInsights(id.id);
+
             if(profile.success) brandProfilesList.push(profile.data);
             if(content.success) brandContentMap[id.id] = content.data;
+
+            if(followerCities.success) brandFollowerCities[id.id] = followerCities.data;
+            if(followerGenders.success) brandFollowerGenders[id.id] = followerGenders.data;
+            if(followerAges.success) brandFollowerAges[id.id] = followerAges.data;
+            if(followerCountries.success) brandFollowerCountries[id.id] = followerCountries.data;
+
+            if(audienceCities.success) brandAudienceCities[id.id] = audienceCities.data;
+            if(audienceGenders.success) brandAudienceGenders[id.id] = audienceGenders.data;
+            if(audienceAges.success) brandAudienceAges[id.id] = audienceAges.data;
+            if(audienceCountries.success) brandAudienceCountries[id.id] = audienceCountries.data;
+
+            if(userInsights.success) brandUserInsights[id.id] = userInsights.data;
         }
 
         await this.redis.storeInCache(`brands.${this.brandId}.content`, brandContentMap);
         await this.redis.storeInCache(`brands.${this.brandId}.profiles`, brandProfilesList);
+
+        await this.redis.storeInCache(`brands.${this.brandId}.audience_cities`, brandAudienceCities);
+        await this.redis.storeInCache(`brands.${this.brandId}.audience_genders`, brandAudienceGenders);
+        await this.redis.storeInCache(`brands.${this.brandId}.audience_ages`, brandAudienceAges);
+        await this.redis.storeInCache(`brands.${this.brandId}.audience_countries`, brandAudienceCountries);
+
+        await this.redis.storeInCache(`brands.${this.brandId}.followers_cities`, brandFollowerCities);
+        await this.redis.storeInCache(`brands.${this.brandId}.followers_genders`, brandFollowerGenders);
+        await this.redis.storeInCache(`brands.${this.brandId}.followers_ages`, brandFollowerAges);
+        await this.redis.storeInCache(`brands.${this.brandId}.followers_countries`, brandFollowerCountries);
+
+        await this.redis.storeInCache(`brands.${this.brandId}.user_insights`, brandUserInsights);
 
         this.prepareAnalytics().catch(err => console.error('Background task error:', err));
     }

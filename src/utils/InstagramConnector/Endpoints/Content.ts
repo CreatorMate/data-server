@@ -8,10 +8,10 @@ import {useRedis} from "../../../lib/redis";
 import {InstagramPost} from "../types/InstagramPostTypes";
 
 export class Content extends InstagramEndpoint {
+    private redis = useRedis();
     public async getContentList(id: string, profile: InstagramProfile|null = null, days = 365, access_token: string = '', refresh: boolean = false): Promise<APIResponse> {
-        const redis = useRedis();
         if(!refresh) {
-            return {success: true, data: await redis.getFromCache(`${id}.content`), meta: null,}
+            return {success: true, data: await this.redis.getFromCache(`${id}.content`) ?? [], meta: null,}
         }
 
         if(!profile) return {success: true, data: [], meta: null,}
@@ -32,7 +32,7 @@ export class Content extends InstagramEndpoint {
             const finishedPost = this.calculateExtraInsights(postWithInsights, profile);
             posts.push(postWithInsights);
         }
-        await redis.storeInCache(`${id}.content`, posts);
+        await this.redis.storeInCache(`${id}.content`, posts);
         return {success: true, data: posts, meta: null}
     }
 
@@ -59,6 +59,7 @@ export class Content extends InstagramEndpoint {
         metrics.set('STORY', 'follows,navigation,profile_activity,profile_visits,reach,replies,shares,total_interactions');
 
         const request: APIResponse = await this.ask(`/${media.id}/insights?metric=${metrics.get(media.media_product_type)}&access_token=${accessToken}`);
+
         if(!request.success) {
             return null;
         }

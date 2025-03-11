@@ -12,13 +12,13 @@ export class Accounts extends InstagramEndpoint {
     private metaRedirectUrl = env?.META_REDIRECT_URL ?? '';
     private metaClientId = env?.META_CLIENT_ID ?? '';
     private metaClientSecret = env?.META_CLIENT_SECRET ?? '';
+    private redis = useRedis();
 
     public async getProfile(id: number|string, access_token: string = '', refresh: boolean = false): Promise<APIResponse<InstagramProfile>> {
-        const redis = useRedis();
         if(!refresh) {
             return {
                 success: true,
-                data: await redis.getFromCache(`${id}.profile`),
+                data: await this.redis.getFromCache(`${id}.profile`) ?? {},
                 meta: null,
             }
         }
@@ -27,7 +27,7 @@ export class Accounts extends InstagramEndpoint {
         if(response.success) {
             const profile = toInstagramProfile(response.data)
             response.data = profile;
-            await redis.storeInCache(`${id}.profile`, profile);
+            await this.redis.storeInCache(`${id}.profile`, profile);
         }
 
         return response;
@@ -71,6 +71,21 @@ export class Accounts extends InstagramEndpoint {
 
             const json = await result.json();
             return {success: true, data: json.access_token, meta: null}
+        } catch (e) {
+            return {success: false, error: 'INSTAGRAM_SERVER_ERROR'};
+        }
+    }
+
+    public async refreshAccessToken(access_token: string): Promise<APIResponse> {
+        try {
+            const longLivedResponse = await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${access_token}`);
+
+            if(!longLivedResponse.ok) {
+                return {success: false, error: 'INVALID_CODE'};
+            }
+
+            const json = await longLivedResponse.json();
+            return {success: true, data: json, meta: null}
         } catch (e) {
             return {success: false, error: 'INSTAGRAM_SERVER_ERROR'};
         }

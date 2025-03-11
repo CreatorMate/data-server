@@ -44,7 +44,7 @@ export class LinkInstagramEndpoint extends Endpoint {
             data: {
                 token: accessToken,
                 expires_at: expiresIn,
-                instagram_id: profileRequest.data.user_id
+                instagram_id: profileRequest.data.id
             }
         })
 

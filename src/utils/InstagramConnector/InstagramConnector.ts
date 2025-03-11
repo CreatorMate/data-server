@@ -2,6 +2,7 @@
 // import {Engagement} from "./Endpoints/Engagement";
 import {Content} from "./Endpoints/Content";
 import {Accounts} from "./Endpoints/Accounts";
+import {Engagement} from "./Endpoints/Engagement";
 
 export class InstagramConnector {
 
@@ -9,9 +10,9 @@ export class InstagramConnector {
     //     return new Identity();
     // }
     //
-    // public engagement() {
-    //     return new Engagement();
-    // }
+    public static engagement() {
+        return new Engagement();
+    }
 
     public static content() {
         return new Content();

@@ -7,7 +7,7 @@ import CreatorManager from "../../../src/managers/CreatorManager";
 import BrandManager from "../../../src/managers/BrandManager";
 import {Creator} from "../../../src/lib/supabase-types";
 import {InstagramManager} from "../../../src/utils/InstagramConnector/InstagramManager";
-import {processInBatches} from "../../../src/utils/uutils";
+import {processInBatches} from "../../../src/utils/utils";
 import {InstagramConnector} from "../../../src/utils/InstagramConnector/InstagramConnector";
 
 export class SyncInstagramEndpoint extends Endpoint {
@@ -161,14 +161,5 @@ export class SyncInstagramEndpoint extends Endpoint {
                 creator_brand: true, // Optional: include relationship data
             },
         });
-    }
-
-    private async syncInstagramBatch(idsToSync: { id: string; instagramId: number }[], batchSize: number) {
-        await processInBatches(idsToSync, batchSize, async ({id, instagramId}) => {
-            const instagramManager = new InstagramManager(id, instagramId);
-            return instagramManager.syncInstagram();
-        });
-
-        console.log("All Instagram accounts synced!");
     }
 }

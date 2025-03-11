@@ -155,7 +155,6 @@ export class AskEndpoint extends Endpoint {
 
         return object;
     }
-
     private async getPosts(name: string) {
         const brand = await this.getPrisma().brands.findFirst({
             where: {
