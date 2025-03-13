@@ -5,7 +5,9 @@ import {CreatorProfile} from "../../Phyllo/Types/CreatorProfile";
 import {Post, toPost} from "../../Phyllo/Types/Post";
 import {InstagramProfile} from "../types/InstagramProfile";
 import {useRedis} from "../../../lib/redis";
-import {InstagramPost} from "../types/InstagramPostTypes";
+import {InstagramComment, InstagramPost} from "../types/InstagramPostTypes";
+import {usePrisma} from "../../../lib/prisma";
+import {decrypt} from "../../Encryption/Encryptor";
 
 export class Content extends InstagramEndpoint {
     private redis = useRedis();
@@ -30,10 +32,31 @@ export class Content extends InstagramEndpoint {
             postWithInsights.user_picture = profile?.profile_picture_url ?? '';
 
             const finishedPost = this.calculateExtraInsights(postWithInsights, profile);
+            finishedPost.posted_by_id = profile.id;
             posts.push(postWithInsights);
         }
         await this.redis.storeInCache(`${id}.content`, posts);
         return {success: true, data: posts, meta: null}
+    }
+
+    public async getPostComments(postId: string, igId: string): Promise<InstagramComment[]> {
+        console.log(postId, igId)
+        const prisma = usePrisma();
+        const instagramProfile = await prisma.instagram_accounts.findFirst({
+            where: {
+                instagram_id: igId
+            }
+        });
+        //@todo add actual error handle
+        if(!instagramProfile) return [];
+
+        const access_token = decrypt(instagramProfile.token);
+
+        const request: APIResponse<{data: InstagramComment[]}> = await this.ask(`/${postId}/comments?fields=text,like_count,username&access_token=${access_token}&limit=50`);
+
+        if(!request.success) return [];
+
+        return request.data.data;
     }
 
     private calculateExtraInsights(post: InstagramPost, profile: InstagramProfile): InstagramPost {

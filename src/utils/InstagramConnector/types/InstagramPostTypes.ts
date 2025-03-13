@@ -25,5 +25,12 @@ export type InstagramPost = {
     active_engagement: number,
     user_picture: string,
     posted_by: string,
+    posted_by_id: string,
     id: number
+}
+
+export type InstagramComment = {
+    text: string,
+    like_count: number,
+    id: string
 }
