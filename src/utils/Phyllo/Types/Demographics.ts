@@ -17,6 +17,11 @@ export type Demographics = {
     gender_age_distribution: gender_age_distribution[]
 }
 
+export type KeyVale = {
+    key: string,
+    value: number
+}
+
 export function toDemographics(data: any): Demographics {
     return {
         cities: data.cities,

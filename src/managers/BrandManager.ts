@@ -22,7 +22,7 @@ export default class BrandManager {
 
     public async syncBrand(idsStoSync: {id: string, instagramId: number}[]) {
         const brandContentMap: {[key: string]: InstagramPost[]} = {};
-        const brandProfilesList: InstagramProfile[] = [];
+        const brandProfilesList: {[key: string]: InstagramProfile} = {};
 
         const brandFollowerCities: {[key: string]: any[]} = {};
         const brandFollowerGenders: {[key: string]: any[]} = {};
@@ -52,7 +52,7 @@ export default class BrandManager {
 
             const userInsights = await InstagramConnector.engagement().getUserInsights(id.id);
 
-            if(profile.success) brandProfilesList.push(profile.data);
+            if(profile.success) brandProfilesList[id.id] = profile.data;
             if(content.success) brandContentMap[id.id] = content.data;
 
             if(followerCities.success) brandFollowerCities[id.id] = followerCities.data;
@@ -142,14 +142,30 @@ export default class BrandManager {
     }
 
     public async getGenderDistribution(ids: string) {
-        const rawGenderInformation: Record<string, gender_age_distribution[]> = await this.redis.getFromCache(`brands.${this.brandId}.gender_age_distribution`);
-        let genderInformation: Map<string, gender_age_distribution[]> = new Map(Object.entries(rawGenderInformation));
+        const rawGenderInformation: Record<string, KeyValue[]> = await this.redis.getFromCache(`brands.${this.brandId}.audience_genders`);
+        let genderInformation: Map<string, KeyValue[]> = new Map(Object.entries(rawGenderInformation));
 
-        console.log(genderInformation);
+        const {items: filteredGenderInformation, size} =  this.filterCreatorsFromMap<KeyValue>(genderInformation, ids);
+        const summedValues: { [key: string]: number } = {};
 
-        const {items: filteredGenderInformation, size} =  this.filterCreatorsFromMap<gender_age_distribution>(genderInformation, ids);
+        filteredGenderInformation.forEach((item) => {
+            summedValues[item.key] = (summedValues[item.key] || 0) + item.value;
+        });
 
-        return this.getAverageArrayValue<gender_age_distribution>(filteredGenderInformation, 'gender', 'value', size);
+        const totalSum = Object.values(summedValues).reduce(
+            (acc, val) => acc + val,
+            0
+        );
+
+        const percentages: KeyValue[] = Object.entries(summedValues).map(
+            ([key, value]) => ({
+                key: key,
+                value: Number(((value / totalSum) * 100).toFixed(2)), // to fixed for only 2 decimals
+            })
+        );
+
+
+        return percentages;
     }
 
     public async getAgeDistribution(ids: string, days: string) {
