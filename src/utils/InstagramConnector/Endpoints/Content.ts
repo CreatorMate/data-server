@@ -8,6 +8,7 @@ import {useRedis} from "../../../lib/redis";
 import {InstagramComment, InstagramPost} from "../types/InstagramPostTypes";
 import {usePrisma} from "../../../lib/prisma";
 import {decrypt} from "../../Encryption/Encryptor";
+import {InstagramConnector} from "../InstagramConnector";
 
 export class Content extends InstagramEndpoint {
     private redis = useRedis();
@@ -37,6 +38,18 @@ export class Content extends InstagramEndpoint {
         }
         await this.redis.storeInCache(`${id}.content`, posts);
         return {success: true, data: posts, meta: null}
+    }
+
+    public async getPosts(id, ids: string = '', amountOfDays: string = "") {
+        let days = 90;
+        if(amountOfDays) days = amountOfDays as number;
+
+        const brandPosts: Record<string, InstagramPost[]> = await this.redis.getFromCache(`brands.${id}.content`);
+        let creatorContent: Map<string, InstagramPost[]> = new Map(Object.entries(brandPosts));
+        const {items: filteredPosts, size} = InstagramConnector.utilities().filterCreatorsFromMap<InstagramPost>(creatorContent, ids);
+        const dateFilter = InstagramConnector.utilities().filterDaysFromList<InstagramPost>('timestamp', filteredPosts, days);
+
+        return dateFilter;
     }
 
     public async getPostComments(postId: string, igId: string): Promise<InstagramComment[]> {
@@ -92,4 +105,5 @@ export class Content extends InstagramEndpoint {
         }
         return media;
     }
+
 }

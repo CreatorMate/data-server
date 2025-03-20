@@ -4,6 +4,7 @@ import {z, ZodObject} from "zod";
 import {Context} from "hono";
 import {errorResponse, successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 import BrandManager from "../../../src/managers/BrandManager";
+import {InstagramConnector} from "../../../src/utils/InstagramConnector/InstagramConnector";
 
 export class GetBrandAgeDistributionEndpoint extends Endpoint {
     protected readonly description: string = "get the % of ages watching your content"
@@ -13,14 +14,16 @@ export class GetBrandAgeDistributionEndpoint extends Endpoint {
     protected schema: ZodObject<any> = z.object({});
 
     protected async handle(context: Context) {
-        const brandId = context.req.param('id') as unknown;
+        const brandId = context.req.param('id') as string;
         let {ids, days} = context.req.query();
 
         if(!brandId) return errorResponse(context, 'provide a valid key');
 
-        const brandManager = new BrandManager(<number>brandId, this.getPrisma());
-        const ageDistribution = await brandManager.getAgeDistribution(ids, days);
+        const getAgeDistribution = await InstagramConnector.statistics().getAgeDistribution(brandId, ids, days);
 
-        return successResponse(context, ageDistribution);
+        // const brandManager = new BrandManager(<number>brandId, this.getPrisma());
+        // const ageDistribution = await brandManager.getAgeDistribution(ids, days);
+
+        return successResponse(context, getAgeDistribution);
     }
 }

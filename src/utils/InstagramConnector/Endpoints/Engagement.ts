@@ -38,7 +38,7 @@ export class Engagement extends InstagramEndpoint {
         return {success: true, data: request, meta: null}
     }
 
-    public async getAudienceAge(id: string, accountId: string, accessToken: string = '', refresh = false): Promise<APIResponse> {
+    public async getAudienceAge(id: string, accountId: string = '', accessToken: string = '', refresh = false): Promise<APIResponse> {
         if(!refresh) {
             const data = await this.redis.getFromCache(`${id}.audience_ages`)
             return {success: true, data: data ?? [], meta: null}

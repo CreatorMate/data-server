@@ -23,11 +23,12 @@ export class GetBrandAverageEndpoint extends Endpoint{
             return errorResponse(context, 'must be given a key');
         }
 
-        const brandManager = new BrandManager(Number(id),this.getPrisma());
-        // const posts: APIResponse<InstagramPost[]> = await InstagramConnector.content().getContentList(id);
-        // if(!posts.success) return errorResponse(context, 'unable to get posts at this time');
-        const posts: InstagramPost[] = await brandManager.getPosts(ids, days);
-        const average = brandManager.getAverageField<InstagramPost>(posts, key as keyof InstagramPost);
+        const average = await InstagramConnector.statistics().getAveragePostStatistic(id, key as keyof InstagramPost, ids, days);
+
+        // // const posts: APIResponse<InstagramPost[]> = await InstagramConnector.content().getContentList(id);
+        // // if(!posts.success) return errorResponse(context, 'unable to get posts at this time');
+        // const posts: InstagramPost[] = await brandManager.getPosts(ids, days);
+        // const average = brandManager.getAverageField<InstagramPost>(posts, key as keyof InstagramPost);
 
         return successResponse(context, {
             average: average

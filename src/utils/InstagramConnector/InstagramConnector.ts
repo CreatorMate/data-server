@@ -3,6 +3,8 @@
 import {Content} from "./Endpoints/Content";
 import {Accounts} from "./Endpoints/Accounts";
 import {Engagement} from "./Endpoints/Engagement";
+import {Statistics} from "./Endpoints/Statistics";
+import {Utilities} from "./Endpoints/Utilities";
 
 export class InstagramConnector {
 
@@ -20,5 +22,13 @@ export class InstagramConnector {
 
     public static accounts() {
         return new Accounts();
+    }
+
+    public static statistics() {
+        return new Statistics();
+    }
+
+    public static utilities() {
+        return new Utilities();
     }
 }

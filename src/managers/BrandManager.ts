@@ -82,8 +82,6 @@ export default class BrandManager {
         await this.redis.storeInCache(`brands.${this.brandId}.followers_countries`, brandFollowerCountries);
 
         await this.redis.storeInCache(`brands.${this.brandId}.user_insights`, brandUserInsights);
-
-        this.prepareAnalytics().catch(err => console.error('Background task error:', err));
     }
 
     public async addPostsToBrand(creatorId: string, posts: any) {
@@ -108,7 +106,7 @@ export default class BrandManager {
     }
 
     public async addProfilesToBrand(creatorId: string, profile: any) {
-        const brandProfiles: CreatorProfile[] = await this.redis.getFromCache(`brands.${this.brandId}.profiles`);
+        const brandProfiles: InstagramProfile[] = await this.redis.getFromCache(`brands.${this.brandId}.profiles`);
         //@ts-ignore
         brandProfiles[creatorId] = profile;
         await this.redis.storeInCache(`brands.${this.brandId}.profiles`, brandProfiles);
@@ -245,6 +243,7 @@ export default class BrandManager {
                 brandPosts[key] = [];
             }
         }
+
         let creatorContent: Map<string, InstagramPost[]> = new Map(Object.entries(brandPosts));
         const {items: filteredPosts, size} = this.filterCreatorsFromMap<InstagramPost>(creatorContent, ids);
         const dateFilter = this.filterDaysFromList<InstagramPost>('timestamp', filteredPosts, days);
@@ -265,10 +264,6 @@ export default class BrandManager {
         }
 
         return followers;
-    }
-
-    private async prepareAnalytics() {
-
     }
 
     private filterDaysFromList<T>(key: keyof T, items: T[], days: number) {

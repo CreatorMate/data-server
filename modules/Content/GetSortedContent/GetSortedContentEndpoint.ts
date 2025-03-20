@@ -6,6 +6,7 @@ import {Post} from "../../../src/utils/Phyllo/Types/Post";
 import {APIResponse, errorResponse, successResponse} from "../../../src/utils/APIResponse/HttpResponse";
 import BrandManager from "../../../src/managers/BrandManager";
 import {InstagramPost} from "../../../src/utils/InstagramConnector/types/InstagramPostTypes";
+import {InstagramConnector} from "../../../src/utils/InstagramConnector/InstagramConnector";
 
 export class GetSortedContentEndpoint extends Endpoint {
     protected readonly description: string = 'get a list of sorted content items, sorted by property';
@@ -23,8 +24,7 @@ export class GetSortedContentEndpoint extends Endpoint {
             return errorResponse(context, 'order must be either asc or desc')
         }
 
-        const brandManager = new BrandManager(<number>brand_id, this.getPrisma());
-        const postsList= await brandManager.getPosts(ids, days);
+        const postsList = await InstagramConnector.content().getPosts(brand_id, ids, days);
         console.log(postsList.length)
 
         const sortedPosts = this.sortPosts<InstagramPost>(postsList, key as keyof InstagramPost, order as  "asc" | "desc");

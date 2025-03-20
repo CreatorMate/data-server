@@ -17,7 +17,7 @@ export type Demographics = {
     gender_age_distribution: gender_age_distribution[]
 }
 
-export type KeyVale = {
+export type KeyValue = {
     key: string,
     value: number
 }
