@@ -37,16 +37,17 @@ export class LinkInstagramEndpoint extends Endpoint {
 
         let expirationTimestamp = Date.now() + Number(longLivedAccessToken.data.expires_in) * 1000;
 
-        const expiresIn = new Date(expirationTimestamp).toISOString();
         const accessToken = encrypt(longLivedAccessToken.data.access_token);
+
+        const expirationDate = new Date(expirationTimestamp);
 
         const instagramProfile = await this.getPrisma().instagram_accounts.create({
             data: {
                 token: accessToken,
-                expires_at: expiresIn,
+                expires_at: expirationDate,
                 instagram_id: profileRequest.data.id
             }
-        })
+        });
 
         if(!instagramProfile) return errorResponse(context, 'COULD_NOT_LINK');
 

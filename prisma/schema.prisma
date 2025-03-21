@@ -8,137 +8,106 @@ datasource db {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model users {
+  id          String    @id @db.Uuid
+  external_id String?   @db.VarChar
+  email       String?   @db.VarChar
+  brand_id    Int?
+  full_name   String?   @db.VarChar
+  picture     String?   @db.VarChar
+  creators    creators?
+  brands      brands?   @relation(fields: [brand_id], references: [id])
+}
+
 model brands {
   id                 Int                 @id @default(autoincrement())
-  name               String              @db.VarChar
+  picture            String?
+  name               String?             @db.VarChar
   is_premium         Boolean?
   customer_id        String?             @db.VarChar
-  instagram_id       Int?
-  picture            String?
-  instagram_accounts instagram_accounts? @relation(fields: [instagram_id], references: [id], onUpdate: NoAction)
+  instagram_id       Int?                @unique
+  instagram_accounts instagram_accounts? @relation(fields: [instagram_id], references: [id])
   creator_brand      creator_brand[]
   projects           projects[]
   users              users[]
   widgets            widgets[]
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model creators {
-  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  status             account_status      @default(NEW)
-  handle             String?             @db.VarChar
-  based_in           String?             @db.VarChar
-  project_types      String[]
-  date_of_birth      String?             @db.VarChar
-  additional_info    String?
-  tiktok             String?             @db.VarChar
-  linked             Boolean             @default(false)
-  instagram_id       Int?
-  user_id            String              @unique @db.Uuid
-  first_name         String?             @db.VarChar
-  last_name          String?
-  work_types         String[]
-  creator_brand      creator_brand[]
-  instagram_accounts instagram_accounts? @relation(fields: [instagram_id], references: [id], onUpdate: NoAction)
-  users              users               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model users {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  external_id String    @db.VarChar
-  email       String    @db.VarChar
-  brand_id    Int?
-  full_name   String?   @db.VarChar
-  picture     String?   @db.VarChar
-  creators    creators?
-  brands      brands?   @relation(fields: [brand_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@index([email], map: "idx_users_email")
-  @@index([external_id], map: "idx_users_external_id")
-  @@index([external_id, email], map: "idx_users_external_id_email")
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model creator_brand {
-  brand_id   Int
-  accepted   Boolean   @default(false)
-  id         Int       @id @default(autoincrement())
-  creator_id String?   @db.Uuid
-  brands     brands    @relation(fields: [brand_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  creators   creators? @relation(fields: [creator_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model columns {
-  id              Int               @id(map: "project_columns_pkey") @default(autoincrement())
+  id              Int               @id @default(autoincrement())
+  name            String
   project_id      Int
-  position        Int               @default(0)
-  projects        projects          @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "project_columns_project_id_fkey")
+  position        Int?
+  projects        projects          @relation(fields: [project_id], references: [id], onDelete: Cascade)
   project_widgets project_widgets[]
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model instagram_accounts {
-  id           Int        @id @default(autoincrement())
-  expires_at   DateTime   @db.Date
-  token        String
-  instagram_id String?
-  brands       brands[]
-  creators     creators[]
+model creator_brand {
+  id         String   @id @db.Uuid
+  creator_id String   @db.Uuid
+  brand_id   Int
+  accepted   Boolean?
+  brands     brands   @relation(fields: [brand_id], references: [id], onDelete: Cascade)
+  creators   creators @relation(fields: [creator_id], references: [id], onDelete: Cascade)
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model creators {
+  id                 String              @id @db.Uuid
+  first_name         String?             @db.VarChar
+  last_name          String?
+  instagram_id       Int?                @unique
+  user_id            String              @unique @db.Uuid
+  status             String?
+  handle             String?             @db.VarChar
+  linked             Boolean?
+  creator_brand      creator_brand[]
+  instagram_accounts instagram_accounts? @relation(fields: [instagram_id], references: [id])
+  users              users               @relation(fields: [user_id], references: [id])
+}
+
+model instagram_accounts {
+  id           Int       @id @default(autoincrement())
+  expires_at   DateTime
+  token        String
+  instagram_id String
+  brands       brands?
+  creators     creators?
+}
+
 model project_widgets {
+  id         String  @id @db.Uuid
   widget_id  Int?
-  project_id Int?
+  project_id Int
   component  String?
   value      String?
   column_id  Int
-  order      Int       @default(0)
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  columns    columns   @relation(fields: [column_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  projects   projects? @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  widgets    widgets?  @relation(fields: [widget_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([project_id], map: "idx_project_widgets_brand_id")
+  order      Int?
+  columns    columns @relation(fields: [column_id], references: [id], onDelete: Cascade)
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model projects {
-  id              Int               @id @default(autoincrement())
-  name            String?           @db.VarChar
-  creators        String?
-  days            Int?              @default(90)
-  slug            String?
-  description     String?
-  brand_id        Int?
-  color           String            @default("#F1F1F1")
-  columns         columns[]
-  project_widgets project_widgets[]
-  brands          brands?           @relation(fields: [brand_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id          Int       @id @default(autoincrement())
+  color       String?
+  name        String?
+  creators    String?
+  days        String?
+  slug        String?
+  description String?
+  brand_id    Int?
+  columns     columns[]
+  brands      brands?   @relation(fields: [brand_id], references: [id], onDelete: Cascade)
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model widgets {
-  id              Int               @id @default(autoincrement())
-  top             Int?
-  grouped         Boolean?
-  name            String?
-  description     String?
-  brand_id        Int?
-  component       String?
-  action          String?
-  endpoint        String?
-  metric_name     String?
-  project_widgets project_widgets[]
-  brands          brands?           @relation(fields: [brand_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-enum account_status {
-  NEW
-  INVITED
-  IN_REVIEW
-  ACCEPTED
+  id          Int      @id @default(autoincrement())
+  top         String?
+  grouped     Boolean?
+  name        String?
+  description String?
+  brand_id    Int?
+  component   String?
+  action      String?
+  endpoint    String?
+  metric_name String?
+  brands      brands?  @relation(fields: [brand_id], references: [id], onDelete: Cascade)
 }
